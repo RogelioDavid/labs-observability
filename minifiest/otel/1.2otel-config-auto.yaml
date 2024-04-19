@@ -1,0 +1,196 @@
+apiVersion: opentelemetry.io/v1alpha1
+kind: OpenTelemetryCollector
+metadata:
+  name: otel-collector
+  namespace: opentelemetry-collector
+spec:
+  image: otel/opentelemetry-collector-contrib:0.97.0
+  replicas: 1
+  config: |
+    extensions:
+      basicauth/tempo:
+        client_auth:
+          username: "406010"
+          password: "eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0="
+      basicauth/prom:
+        client_auth:
+          username: "821057"
+          password: "eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0="
+  
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+      prometheus:
+        trim_metric_suffixes: true
+        config:
+          scrape_configs:
+          - job_name: otel-collector
+            scrape_interval: 5s
+            static_configs:
+            - targets: ['localhost:8888']
+
+    exporters:
+      debug:
+        verbosity: normal
+        sampling_initial: 5
+        sampling_thereafter: 200
+      otlp:
+        endpoint: tempo-us-central1.grafana.net:443
+        auth:
+          authenticator: basicauth/tempo
+      prometheusremotewrite:
+        endpoint: https://prometheus-us-central1.grafana.net/api/prom/push
+        tls:
+          insecure: true
+        auth:
+          authenticator: basicauth/prom
+ 
+    processors:
+      batch:
+        timeout: 200ms
+        send_batch_size: 512
+        send_batch_max_size: 11000
+
+      transform:
+          error_mode: ignore
+          trace_statements:
+            - context: resource
+              statements:
+                - replace_pattern(attributes["k8s.replicaset.name"], "-[0-9a-zA-Z]+$", "")
+                - set(attributes["service.name"], attributes["k8s.replicaset.name"])
+            - context: span
+              statements:
+                - replace_pattern(attributes["k8s.replicaset.name"], "-[0-9a-zA-Z]+$", "")
+                - set(attributes["service.name"], attributes["k8s.replicaset.name"]) where attributes["service.name"] == nil
+
+      filter/spans:
+        spans:
+          exclude:
+            match_type: regexp
+            span_names:
+              - OperationHandler.handle
+              - tcp.connect
+              - dns.lookup
+              - PING
+              - PSETEX
+              - fs statSync
+              - fs readFileSync
+              - fs readFileSync
+              - fs realpathSync
+              - fs writeFile
+              - fs mkdir
+              - fs stat
+              - fs chmod
+              - fs existsSync
+
+
+      filter/ottl:
+        error_mode: ignore
+        traces:
+          span:
+            - 'attributes["http.target"] == "/health"'
+            - 'attributes["http.target"] == "/ready"'
+            - 'attributes["http.route"] == "/health"'
+            - 'attributes["http.route"] == "/ready"'
+            - 'attributes["http.target"] == ".*/private/health/readiness"'
+            - 'attributes["http.route"] == ".*/private/health/readiness"'
+            - 'attributes["http.target"] == ".*/private/health/liveness"'
+            - 'attributes["http.route"] == ".*/private/health/liveness"'
+            - 'attributes["express.type"] == "middleware"'
+            - 'attributes["express.type"] == "router"'
+            - 'attributes["express.type"] == "request_handler"'
+            - 'attributes["db.operation"] == "EXISTS"'
+            - 'IsMatch(attributes["http.target"], ".*/private/ready_check")'
+            - 'IsMatch(attributes["http.target"], ".*/private/health_check")'
+            - 'IsMatch(attributes["http.target"], ".*/v1/private/health.*")'
+            - 'IsMatch(attributes["http.target"], ".*/v1/private/prometheus.*")'
+            - 'IsMatch(attributes["http.target"], ".*/private/prometheus")'
+            - 'IsMatch(attributes["http.target"], ".*/private/health/.*")'
+            - 'IsMatch(attributes["http.target"], ".*/v1/private/health/readiness.*")'
+            - 'IsMatch(attributes["http.target"], ".*/v1/places/.*")'
+            - 'IsMatch(attributes["http.target"], ".*/v1/plates/search")'
+
+    connectors:
+      spanmetrics:
+      servicegraph:
+        latency_histogram_buckets: [100ms, 250ms, 500ms, 1s, 2s, 5s, 10s]
+        dimensions:
+          - http.method
+          - http.target
+        store:
+          ttl: 1s
+          max_items: 10
+      
+    service:
+      extensions: [ basicauth/tempo, basicauth/prom ]
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [batch, transform, filter/spans, filter/ottl]
+          exporters: [debug, otlp, spanmetrics, servicegraph]
+        metrics:
+          receivers: [otlp, prometheus, spanmetrics, servicegraph]
+          processors: [batch]
+          exporters: [debug, prometheusremotewrite]
+---
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: auto-instrumentation
+  namespace: opentelemetry-collector
+spec:
+  exporter:
+    endpoint: http://otel-collector-collector.opentelemetry-collector.svc.cluster.local:4317
+  propagators:
+  - tracecontext
+  #- baggage
+  #- b3
+  sampler:
+    argument: '0.1'
+    type: parentbased_traceidratio
+
+  java:
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-java:1.30.0
+    env:
+    - name: OTEL_INSTRUMENTATION_HTTP_CLIENT_CAPTURE_REQUEST_HEADERS
+      value: "true"
+
+  nodejs:
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-nodejs:0.40.0
+    env:
+    - name: OTEL_INSTRUMENTATION_HTTP_CLIENT_CAPTURE_REQUEST_HEADERS
+      value: "true"
+---
+apiVersion: opentelemetry.io/v1alpha1
+kind: OpenTelemetryCollector
+metadata:
+  labels:
+    app: opentelemetry
+    component: collector
+  name: otel-collector
+  namespace: opentelemetry-collector
+spec:
+  mode: sidecar
+  config: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+    exporters:
+      debug:
+      otlp:
+        endpoint: http://otel-collector-collector.opentelemetry-collector.svc.cluster.local:4317
+        tls:
+          insecure: true
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          exporters: [otlp]
+
+

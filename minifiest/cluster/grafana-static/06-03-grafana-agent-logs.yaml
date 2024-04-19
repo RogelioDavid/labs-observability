@@ -1,0 +1,168 @@
+kind: ConfigMap
+metadata:
+  name: grafana-agent-logs
+  namespace: monitoring
+apiVersion: v1
+data:
+  agent.yaml: |
+    metrics:
+      wal_directory: /tmp/grafana-agent-wal
+      global:
+        scrape_interval: 60s
+        external_labels:
+          cluster: autopilot-cluster-app
+      configs:
+      - name: integrations
+        remote_write:
+        - url: https://prometheus-us-central1.grafana.net/api/prom/push
+          basic_auth:
+            username: 821057
+            password: eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0=
+    integrations:
+      prometheus_remote_write:
+      - url: https://prometheus-us-central1.grafana.net/api/prom/push
+        basic_auth:
+          username: 821057
+          password: eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0=
+    
+    logs:
+      configs:
+      - name: integrations
+        clients:
+        - url: https://logs-prod-017.grafana.net/loki/api/v1/push
+          basic_auth:
+            username: 409497
+            password: eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0=
+          external_labels:
+            cluster: autopilot-cluster-app
+        positions:
+          filename: /tmp/positions.yaml
+        target_config:
+          sync_period: 10s
+        scrape_configs:
+        - job_name: integrations/grafana-mimir-logs
+          kubernetes_sd_configs:
+            - role: pod
+          pipeline_stages:
+            - cri: {}
+          relabel_configs:
+            - action: keep
+              regex: mimir-distributed-.*
+              source_labels:
+                - __meta_kubernetes_pod_label_helm_sh_chart
+            - source_labels:
+                - __meta_kubernetes_pod_node_name
+              target_label: __host__
+            - action: replace
+              replacement: $1
+              separator: /
+              source_labels:
+                - __meta_kubernetes_namespace
+                - __meta_kubernetes_pod_container_name
+              target_label: job
+            - action: replace # Replace the cluster label if it isn't present already
+              regex: ''
+              replacement: k8s-cluster
+              separator: ''
+              source_labels:
+                - cluster
+              target_label: cluster
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_namespace
+              target_label: namespace
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_pod_name
+              target_label: pod
+            - action: replace # Necessary for slow queries dashboard
+              source_labels:
+                - __meta_kubernetes_pod_container_name
+              target_label: name
+            - action: replace # Not actually necessary, here for consistency with metrics
+              source_labels:
+                - __meta_kubernetes_pod_container_name
+              target_label: container
+            - replacement: /var/log/pods/*$1/*.log
+              separator: /
+              source_labels:
+                - __meta_kubernetes_pod_uid
+                - __meta_kubernetes_pod_container_name
+              target_label: __path__
+        - job_name: integrations/kubernetes/pod-logs
+          kubernetes_sd_configs:
+            - role: pod
+          pipeline_stages:
+            - docker: {}
+          relabel_configs:
+            - source_labels:
+                - __meta_kubernetes_pod_node_name
+              target_label: __host__
+            - action: replace
+              replacement: $1
+              separator: /
+              source_labels:
+                - __meta_kubernetes_namespace
+                - __meta_kubernetes_pod_name
+              target_label: job
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_namespace
+              target_label: namespace
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_pod_name
+              target_label: pod
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_pod_container_name
+              target_label: container
+            - replacement: /var/log/pods/*$1/*.log
+              separator: /
+              source_labels:
+                - __meta_kubernetes_pod_uid
+                - __meta_kubernetes_pod_container_name
+              target_label: __path__
+        - job_name: hello-observability
+          static_configs:
+            - targets: [localhost]
+              labels:
+                job: hello-observability
+                __path__: /tmp/hello-observability.log
+        - job_name: ms-service-app-ms1
+          static_configs:
+          - targets: [localhost]
+            labels:
+              job: ms-service-app-ms1
+              __path__: /tmp/ms-service-app-ms1.log
+        - job_name: ms-service-app-ms2
+          static_configs:
+          - targets: [localhost]
+            labels:
+              job: ms-service-app-ms2
+              __path__: /tmp/ms-service-app-ms2.log
+        - job_name: 'kubernetes-pods'
+          kubernetes_sd_configs:
+          - role: pod
+          relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: (.+)(?::\d+);(\d+)
+            replacement: $1:$2
+            target_label: __address__
+          - action: labelmap
+            regex: __meta_kubernetes_pod_label_(.+)
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: kubernetes_namespace
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: replace
+            target_label: kubernetes_pod_name                  
+---

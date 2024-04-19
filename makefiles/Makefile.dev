@@ -1,0 +1,77 @@
+mutation-score-threshold=80
+profile=local
+user = $(LATAM_USER)
+source-xsd=src/main/resources/xsd/
+dest-xsd=src/main/resources/xsd_runtime/
+ssid=UNIFORM-BRAVO_SSID
+
+OS := $(shell uname)
+
+ifeq ($(OS),Linux)
+	COMMAND = xdg-open
+else
+	COMMAND = open
+endif
+
+clean:
+	mvn clean
+
+build-artifact:
+	mvn clean package -Dmaven.test.skip=true -U
+
+unit-test:
+	mvn test -Punit -Dspring.profiles.active=$(profile)
+
+component-test:
+	mvn verify -Pcomponent -Dspring.profiles.active=$(profile)
+
+functional-test:
+	mvn test -Pfunctional
+
+functional-test-debug:
+	mvn -Dmaven.surefire.debug test -Pfunctional
+
+test: unit-test component-test functional-test contract-consumer-test
+
+all: clean test sonar
+
+
+integration-test:
+	mvn test -Dtest=**/*IntegrationTest -Dspring.profiles.active=$(profile)
+
+sonar:
+	mvn -U -Psonar sonar:sonar
+
+sonar-report:
+	 $(COMMAND) target/sonar/issues-report/issues-report.html
+
+run:
+	mvn clean spring-boot:run -Plocal -Dspring.profiles.active=$(profile) -DskipTests=true
+
+debug:
+	mvnDebug spring-boot:run -Plocal -Dspring.profiles.active=$(profile)
+
+create-cluster-a:
+	gcloud beta container --project "sparta-proyect-host" clusters create "onlineboutique-1" --region "us-central1" --no-enable-basic-auth --cluster-version "1.27.3-gke.100" --release-channel "regular" --machine-type "e2-medium" --image-type "COS_CONTAINERD" --disk-type "pd-balanced" --disk-size "70" --metadata disable-legacy-endpoints=true --scopes "https://www.googleapis.com/auth/devstorage.read_only","https://www.googleapis.com/auth/logging.write","https://www.googleapis.com/auth/monitoring","https://www.googleapis.com/auth/servicecontrol","https://www.googleapis.com/auth/service.management.readonly","https://www.googleapis.com/auth/trace.append" --num-nodes "1" --logging=SYSTEM,WORKLOAD --monitoring=SYSTEM --enable-ip-alias --network "projects/sparta-proyect-host/global/networks/default" --subnetwork "projects/sparta-proyect-host/regions/us-central1/subnetworks/default" --no-enable-intra-node-visibility --default-max-pods-per-node "110" --security-posture=standard --workload-vulnerability-scanning=disabled --no-enable-master-authorized-networks --addons HorizontalPodAutoscaling,HttpLoadBalancing,NodeLocalDNS,GcePersistentDiskCsiDriver --enable-autoupgrade --enable-autorepair --max-surge-upgrade 1 --max-unavailable-upgrade 0 --labels mesh_id=proj-578594402186 --binauthz-evaluation-mode=DISABLED --enable-managed-prometheus --workload-pool "sparta-proyect-host.svc.id.goog" --enable-shielded-nodes --enable-l4-ilb-subsetting
+
+prepare-cluster-a: create-cluster-a
+	kubectl create namespace applications, monitoring
+
+create-cluster-b:
+	gcloud beta container --project "sparta-proyect-host" clusters create "onlineboutique-2" --region "us-central1" --no-enable-basic-auth --cluster-version "1.27.3-gke.100" --release-channel "regular" --machine-type "e2-medium" --image-type "COS_CONTAINERD" --disk-type "pd-balanced" --disk-size "70" --metadata disable-legacy-endpoints=true --scopes "https://www.googleapis.com/auth/cloud-platform" --num-nodes "1" --logging=SYSTEM,WORKLOAD --monitoring=SYSTEM --enable-ip-alias --network "projects/sparta-proyect-host/global/networks/default" --subnetwork "projects/sparta-proyect-host/regions/us-central1/subnetworks/default" --no-enable-intra-node-visibility --default-max-pods-per-node "110" --security-posture=standard --workload-vulnerability-scanning=disabled --no-enable-master-authorized-networks --addons HorizontalPodAutoscaling,HttpLoadBalancing,GcePersistentDiskCsiDriver --enable-autoupgrade --enable-autorepair --max-surge-upgrade 1 --max-unavailable-upgrade 0 --labels mesh_id=proj-578594402186 --binauthz-evaluation-mode=DISABLED --enable-managed-prometheus --workload-pool "sparta-proyect-host.svc.id.goog" --enable-shielded-nodes --enable-l4-ilb-subsetting
+
+prepare-cluster-b: create-cluster-b
+	kubectl create namespace applications
+
+create-cluster-simple:
+	gcloud beta container --project "sparta-proyect-host" clusters create "autopilot-cluster-app" --no-enable-basic-auth --cluster-version "1.27.8-gke.1067004" --release-channel "regular" --machine-type "n2-standard-2" --image-type "COS_CONTAINERD" --disk-type "pd-balanced" --disk-size "80" --metadata disable-legacy-endpoints=true --scopes "https://www.googleapis.com/auth/devstorage.read_only","https://www.googleapis.com/auth/logging.write","https://www.googleapis.com/auth/monitoring","https://www.googleapis.com/auth/servicecontrol","https://www.googleapis.com/auth/service.management.readonly","https://www.googleapis.com/auth/trace.append" --num-nodes "1" --logging=SYSTEM,WORKLOAD --monitoring=SYSTEM --enable-ip-alias --network "projects/sparta-proyect-host/global/networks/principal-vpc" --subnetwork "projects/sparta-proyect-host/regions/us-central1/subnetworks/principal-vpc"  --no-enable-intra-node-visibility --default-max-pods-per-node "110" --security-posture=standard --workload-vulnerability-scanning=disabled --no-enable-master-authorized-networks --addons HorizontalPodAutoscaling,HttpLoadBalancing,GcePersistentDiskCsiDriver --enable-autoupgrade --enable-autorepair --max-surge-upgrade 1 --max-unavailable-upgrade 0 --binauthz-evaluation-mode=DISABLED --enable-managed-prometheus --enable-shielded-nodes --node-locations "us-central1-a"
+
+create-cluster-simple-privated:
+	gcloud beta container --project "sparta-proyect-host" clusters create "autopilot-cluster-app" --no-enable-basic-auth --cluster-version "1.27.8-gke.1067004" --release-channel "regular" --machine-type "e2-medium" --image-type "COS_CONTAINERD" --disk-type "pd-balanced" --disk-size "100" --metadata disable-legacy-endpoints=true --scopes "https://www.googleapis.com/auth/devstorage.read_only","https://www.googleapis.com/auth/logging.write","https://www.googleapis.com/auth/monitoring","https://www.googleapis.com/auth/servicecontrol","https://www.googleapis.com/auth/service.management.readonly","https://www.googleapis.com/auth/trace.append" --num-nodes "2" --logging=SYSTEM,WORKLOAD --monitoring=SYSTEM --enable-private-nodes --master-ipv4-cidr "172.16.0.32/28" --enable-ip-alias --network "projects/sparta-proyect-host/global/networks/principal-vpc" --subnetwork "projects/sparta-proyect-host/regions/us-central1/subnetworks/principal-vpc"  --no-enable-intra-node-visibility --default-max-pods-per-node "110" --security-posture=standard --workload-vulnerability-scanning=disabled --no-enable-master-authorized-networks --addons HorizontalPodAutoscaling,HttpLoadBalancing,GcePersistentDiskCsiDriver --enable-autoupgrade --enable-autorepair --max-surge-upgrade 1 --max-unavailable-upgrade 0 --labels mesh_id=proj-606627515626  --binauthz-evaluation-mode=DISABLED --enable-managed-prometheus  --workload-pool "sparta-proyect-host.svc.id.goog" --enable-shielded-nodes --node-locations "us-central1-a"
+    
+install-kube-state-metrics:
+	helm repo add prometheus-community https://prometheus-community.github.io/helm-charts && helm repo update && helm install ksm prometheus-community/kube-state-metrics --set image.tag="v2.9.2" -n "monitoring"
+
+
+install-prometheus-node-exporter:
+	helm repo add prometheus-community https://prometheus-community.github.io/helm-charts && helm repo update && helm install nodeexporter prometheus-community/prometheus-node-exporter -n "monitoring"

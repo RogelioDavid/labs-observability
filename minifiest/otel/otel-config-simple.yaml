@@ -1,0 +1,129 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: collector-config
+  namespace: "monitoring"  
+data:
+  collector.yaml: |
+    extensions:
+      basicauth/tempo:
+        client_auth:
+          username: "406010"
+          password: "eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0="
+      basicauth/promp:
+        client_auth:
+          username: "406010"
+          password: "eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0="
+    connectors:
+      spanmetrics:
+      servicegraph:
+        latency_histogram_buckets: [100ms, 250ms, 500ms, 1s, 2s, 5s, 10s]
+        dimensions:
+          - http.method
+          - http.target 
+        store:
+          ttl: 1s
+          max_items: 10  
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+    exporters:
+      prometheus/servicegraph:
+        endpoint: tempo-us-central1.grafana.net:443
+        auth:
+          authenticator: basicauth/promp
+        namespace: servicegraph
+      logging:
+        loglevel: debug
+      debug:  
+      otlp:
+        endpoint: tempo-us-central1.grafana.net:443
+        auth:
+          authenticator: basicauth/tempo
+    processors:
+      batch:
+        timeout: 200ms
+        send_batch_size: 512
+        send_batch_max_size: 11000
+    service:
+      extensions: [ basicauth/tempo, basicauth/promp ]
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp, debug, spanmetrics, servicegraph]
+        metrics:
+          receivers: [otlp, spanmetrics, servicegraph]
+          processors: [batch]
+          exporters: [debug]
+        metrics/servicegraph:
+          receivers: [servicegraph]
+          exporters: [debug]      
+        logs:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [debug]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opentelemetrycollector
+  namespace: "monitoring"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: opentelemetrycollector
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: opentelemetrycollector
+    spec:
+      containers:
+      - name: otelcol
+        args:
+        - --config=/conf/collector.yaml
+        image: otel/opentelemetry-collector-contrib:0.97.0
+        volumeMounts:
+        - mountPath: /conf
+          name: collector-config
+      volumes:
+      - configMap:
+          items:
+          - key: collector.yaml
+            path: collector.yaml
+          name: collector-config
+        name: collector-config    
+---              
+apiVersion: v1
+kind: Service
+metadata:
+  name: opentelemetrycollector
+  namespace: "monitoring"
+spec:
+  ports:
+  - name: grpc-otlp
+    port: 4317
+    protocol: TCP
+    targetPort: 4317
+  selector:
+    app.kubernetes.io/name: opentelemetrycollector
+  type: ClusterIP        
+---              
+apiVersion: v1
+kind: Service
+metadata:
+  name: opentelemetrycollector-2
+  namespace: "monitoring"
+spec:
+  ports:
+  - name: grpc-http
+    port: 4318
+    protocol: TCP
+    targetPort: 4318
+  selector:
+    app.kubernetes.io/name: opentelemetrycollector-2
+  type: ClusterIP        
