@@ -41,15 +41,6 @@
  - kubectl apply -f .\minifiest\deployment-apps.yml
 
 
-# AGENTE Y APLICACION CON EL AGENTE EN EL DOCKERFILE
- - kubectl apply -f .\minifiest\06-01-grafana-agent.yaml
-
-
-# ADICIONAL PARA VER LOGS
- - kubectl create -f .\06-03-grafana-agent-logs.yaml
-
- 
-
 # ADICIONAL : PROBAR ISTIO
  
 Instalar istio y demo
@@ -61,7 +52,7 @@ Instalar istio y demo
  PASOS MAS ARRIBA
 
 ### Intervenir pod java con auto instrumentacion
-kubectl apply -f .\addOns\istio-1.21.0\base\bookinfo.yaml
+kubectl apply -f .\istio-base\bookinfo.yaml
 
 
 ### Instalar agente grafana

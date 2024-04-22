@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
         - name: hello-observability
-          image: rmendoza/hello-observability-demo
+          image: rmendoza/hello-observability-simple
           imagePullPolicy: Always
           ports:
           - name: out-http
@@ -108,7 +108,7 @@ spec:
     spec:
       containers:
         - name: ms-service-app-ms2
-          image: rmendoza/ms-service-app-ms2-demo
+          image: rmendoza/ms-service-app-ms2-simple
           imagePullPolicy: Always
           ports:
           - name: out-http
@@ -179,7 +179,7 @@ spec:
     spec:
       containers:
         - name: ms-service-app-ms1
-          image: rmendoza/ms-service-app-ms1-demo
+          image: rmendoza/ms-service-app-ms1-simple
           imagePullPolicy: Always
           ports:
           - name: out-http

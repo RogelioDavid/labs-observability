@@ -72,7 +72,7 @@ Esta arquitectura invita a entender temas como:
 
 ## COLLECTOR EN MODO OPERADOR PARA LA AUTO-ISTRUMENTACION
 ````
- - kubectl apply  -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.4/cert-manager.yaml
+ - kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.4/cert-manager.yaml
  - kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml
 ````
 ###  OPCION 1
@@ -86,6 +86,14 @@ Esta arquitectura invita a entender temas como:
 
 ## MODOS INSTALACION MICROSERVICIOS  AUTO-INSTRUMENACION 
 ````
-  - Opcion 1 : kubectl apply -f .\minifiest\deployment-apps-auto.yml 
-  - Opcion 2 : kubectl apply -f .\minifiest\replicaset-apps-auto.yml
+  - Opcion 1 : kubectl apply -f .\minifiest\apps\deployment-apps-auto.yml 
+  - Opcion 2 : kubectl apply -f .\minifiest\apps\replicaset-apps-auto.yml
 ````
+
+
+## AGENTE MODO ESTATICO 
+ - kubectl apply -f .\grafana-static\grafana-agent.yaml
+
+
+### AGENTE MODO ESTATICO VER LOGS
+ - kubectl apply -f .\grafana-static\grafana-agent-logs.yaml

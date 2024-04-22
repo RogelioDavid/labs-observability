@@ -23,5 +23,5 @@
   
 
 ###   INSTALACION DE MICROSERVICIOS CON AUTO-INSTRUMENACION 
-  - Opcion 1 : kubectl apply -f .\minifiest\deployment-apps-auto.yml 
-  - Opcion 2 : kubectl apply -f .\minifiest\replicaset-apps-auto.yml
+  - Opcion 1 : kubectl apply -f .\minifiest\apps\deployment-apps-auto.yml 
+  - Opcion 2 : kubectl apply -f .\minifiest\apps\replicaset-apps-auto.yml
