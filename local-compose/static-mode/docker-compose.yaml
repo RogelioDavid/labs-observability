@@ -56,7 +56,7 @@ services:
   load-generator:
     image: curlimages/curl:latest
     volumes:
-      - ../hello-observability/load-generator.sh:/tmp/load-generator.sh
+      - ../load-generator.sh:/tmp/load-generator.sh
     command: /bin/sh -c "/tmp/load-generator.sh"
   
   agent-operator:
