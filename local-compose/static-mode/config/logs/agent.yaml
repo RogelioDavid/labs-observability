@@ -1,0 +1,68 @@
+# This file serves as the agent configuration to interact with the
+# docker compose environment.
+#
+# You should pass the following command line flags when running the agent
+# locally and using this file:
+#
+#   -enable-features=integrations-next -config.expand-env -config.enable-read-api
+#
+# -enable-features=integrations-next is required as the file is configured for
+# the integrations revamp.
+#
+# -config.expand-env is required to expand environment variables. Environment
+# variables are used when running the agent inside of docker-compose to connect
+# to the other services. When running the agent externally, the expressions will
+# default to the appropriate values of the exposed ports.
+#
+# -config.enable-read-api is optional, but allows you to invoke the /-/config
+# endpoint to examine the generated config.
+
+server:
+  log_level: debug
+
+#integrations:
+#  node_exporter:
+#    enabled: true
+#    rootfs_path: /host/root
+#    sysfs_path: /host/sys
+#    procfs_path: /host/proc
+
+logs:
+  configs:
+  - name: default
+    positions:
+      filename: /tmp/positions.yaml
+    scrape_configs:
+      - job_name: hello-observability
+        static_configs:
+          - targets: [localhost]
+            labels:
+              job: hello-observability
+              __path__: /tmp/hello-observability.log
+      - job_name: ms-service-app-ms1
+        static_configs:
+        - targets: [localhost]
+          labels:
+            job: ms-service-app-ms1
+            __path__: /tmp/ms-service-app-ms1.log
+      - job_name: ms-service-app-ms2
+        static_configs:
+        - targets: [localhost]
+          labels:
+            job: ms-service-app-ms2
+            __path__: /tmp/ms-service-app-ms2.log
+      - job_name: tomcat-access
+        static_configs:
+        - targets: [localhost]
+          labels:
+            job: tomcat-access
+            __path__: /var/log/*log
+
+    clients:
+      - url: https://logs-prod-017.grafana.net/loki/api/v1/push
+        basic_auth:
+          username: 409497
+          password: eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0=
+    target_config:
+      sync_period: 10s
+
