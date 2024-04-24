@@ -3,7 +3,7 @@ services:
 
   # The hello-observability application
   hello-observability.applications.svc.cluster.local:
-    image: rmendoza/hello-observability-manual
+    image: rmendoza/hello-observability-manual:v2
     volumes:
       - ./logs/hello-observability.log:/tmp/hello-observability.log
       - ./logs/access_log.log:/tmp/access_log.log
@@ -18,7 +18,7 @@ services:
 
 
   ms-service-app-ms1.applications.svc.cluster.local:
-    image: rmendoza/ms-service-app-ms1-manual
+    image: rmendoza/ms-service-app-ms1-manual:v2
     volumes:
       # Log files. They are all also accessible to the agent container,
       # through docker volume mount
@@ -35,7 +35,7 @@ services:
       - "8081:8081"
 
   ms-service-app-ms2.applications.svc.cluster.local:
-    image: rmendoza/ms-service-app-ms2-manual
+    image: rmendoza/ms-service-app-ms2-manual:v2
     volumes:
       # Log files. They are all also accessible to the agent container,
       # through docker volume mount
