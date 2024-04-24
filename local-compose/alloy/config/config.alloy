@@ -1,0 +1,246 @@
+logging {
+    level  = "debug"
+    format = "logfmt"
+}
+
+// Prometheus configs
+prometheus.remote_write "metrics_hello_observability" {
+  external_labels = {
+    monitor = "hello-observability",
+  }
+  endpoint {
+    name = "hello-observability-6397c4"
+	url  = "https://prometheus-us-central1.grafana.net/api/prom/push"
+	basic_auth {
+	  username = "821057"
+	  password = "eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0="
+	}
+  }
+}
+discovery.relabel "metrics_hello_observability_ms_service_app_ms1" {
+	targets = [{
+		__address__ = "ms-service-app-ms1.applications.svc.cluster.local:8081",
+	}]
+	rule {
+		source_labels = ["trace_id"]
+		target_label  = "traceID"
+	}
+}
+
+discovery.relabel "metrics_hello_observability_ms_service_app_ms2" {
+	targets = [{
+		__address__ = "ms-service-app-ms2.applications.svc.cluster.local:8082",
+	}]
+	rule {
+		source_labels = ["trace_id"]
+		target_label  = "traceID"
+	}
+}
+
+discovery.relabel "metrics_hello_observability_hello_observability" {
+	targets = [{
+		__address__ = "hello-observability.applications.svc.cluster.local:8080",
+	}]
+	rule {
+		source_labels = ["trace_id"]
+		target_label  = "traceID"
+	}
+}
+
+prometheus.scrape "metrics_hello_observability_ms_service_app_ms1" {
+	targets         = discovery.relabel.metrics_hello_observability_ms_service_app_ms1.output
+	forward_to      = [prometheus.relabel.metrics_hello_observability_ms_service_app_ms1.receiver]
+	job_name        = "ms-service-app-ms1"
+	scrape_interval = "10s"
+}
+
+prometheus.scrape "metrics_hello_observability_ms_service_app_ms2" {
+	targets         = discovery.relabel.metrics_hello_observability_ms_service_app_ms2.output
+	forward_to      = [prometheus.relabel.metrics_hello_observability_ms_service_app_ms2.receiver]
+	job_name        = "ms-service-app-ms2"
+	scrape_interval = "10s"
+}
+
+prometheus.scrape "metrics_hello_observability_hello_observability" {
+	targets         = discovery.relabel.metrics_hello_observability_hello_observability.output
+	forward_to      = [prometheus.relabel.metrics_hello_observability_hello_observability.receiver]
+	job_name        = "hello-observability"
+	scrape_interval = "10s"
+}
+
+prometheus.relabel "metrics_hello_observability_ms_service_app_ms1" {
+	forward_to = [prometheus.remote_write.metrics_hello_observability.receiver]
+	rule {
+		source_labels = ["trace_id"]
+		target_label  = "traceID"
+	}
+}
+
+prometheus.relabel "metrics_hello_observability_ms_service_app_ms2" {
+	forward_to = [prometheus.remote_write.metrics_hello_observability.receiver]
+	rule {
+		source_labels = ["trace_id"]
+		target_label  = "traceID"
+	}
+}
+
+prometheus.relabel "metrics_hello_observability_hello_observability" {
+	forward_to = [prometheus.remote_write.metrics_hello_observability.receiver]
+	rule {
+		source_labels = ["trace_id"]
+		target_label  = "traceID"
+	}
+}
+
+ 
+
+// LOKI configs
+loki.write "logs_default" {
+	endpoint {
+		url = "https://logs-prod-017.grafana.net/loki/api/v1/push"
+
+		basic_auth {
+			username = "409497"
+			password = "eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0="
+		}
+	}
+	external_labels = {}
+}
+
+local.file_match "logs_default_hello_observability" {
+	path_targets = [{
+		__address__ = "localhost",
+		__path__    = "/tmp/hello-observability.log",
+		job         = "hello-observability",
+	}]
+}
+
+loki.source.file "logs_default_hello_observability" {
+	targets    = local.file_match.logs_default_hello_observability.targets
+	forward_to = [loki.write.logs_default.receiver]
+}
+
+local.file_match "logs_default_ms_service_app_ms1" {
+	path_targets = [{
+		__address__ = "localhost",
+		__path__    = "/tmp/ms-service-app-ms1.log",
+		job         = "ms-service-app-ms1",
+	}]
+}
+
+loki.source.file "logs_default_ms_service_app_ms1" {
+	targets    = local.file_match.logs_default_ms_service_app_ms1.targets
+	forward_to = [loki.write.logs_default.receiver]
+}
+
+local.file_match "logs_default_ms_service_app_ms2" {
+	path_targets = [{
+		__address__ = "localhost",
+		__path__    = "/tmp/ms-service-app-ms2.log",
+		job         = "ms-service-app-ms2",
+	}]
+}
+
+loki.source.file "logs_default_ms_service_app_ms2" {
+	targets    = local.file_match.logs_default_ms_service_app_ms2.targets
+	forward_to = [loki.write.logs_default.receiver]
+}
+
+local.file_match "logs_default_tomcat_access" {
+	path_targets = [{
+		__address__ = "localhost",
+		__path__    = "/tmp/access_log.log",
+		job         = "tomcat-access",
+	}]
+}
+
+loki.source.file "logs_default_tomcat_access" {
+	targets    = local.file_match.logs_default_tomcat_access.targets
+	forward_to = [loki.write.logs_default.receiver]
+}
+
+
+// OtelCol configs
+
+otelcol.auth.basic "tempo" {
+  username = 406010
+  password = "eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0="
+}
+otelcol.auth.basic "promp" {
+  username = 406010
+  password ="eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0="
+}
+
+otelcol.processor.batch "processorbatch" {
+  output {
+    metrics = [otelcol.exporter.otlp.basetotlp.input]
+    logs    = [otelcol.exporter.otlp.basetotlp.input]
+    traces  = [otelcol.exporter.otlp.basetotlp.input]
+  }
+}
+otelcol.receiver.otlp "receiverbase" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+  output {
+    metrics = [otelcol.processor.batch.processorbatch.input]
+    logs    = [otelcol.processor.batch.processorbatch.input]
+    traces  = [otelcol.exporter.otlp.basetotlp.input,
+			   otelcol.connector.servicegraph.servicegraphbase.input,
+			   otelcol.connector.spanmetrics.spanmetricsbse.input,
+			   otelcol.processor.batch.processorbatch.input]
+  }
+}
+
+otelcol.receiver.prometheus "prometheusdefault" {
+  output {
+    metrics = [otelcol.exporter.otlp.basetotlp.input]
+  }
+}
+
+otelcol.connector.servicegraph "servicegraphbase" {
+  dimensions = ["http.method", "http.target"]
+  latency_histogram_buckets = ["100ms", "250ms", "500ms", "1s", "2s", "5s", "10s"]	
+  store {
+	max_items = 20
+	ttl = "2s" 
+  }
+  output {
+    metrics = [otelcol.exporter.prometheus.default.input]
+  }
+}
+otelcol.connector.spanmetrics "spanmetricsbse" {
+  dimension {
+    name = "http.status_code"
+  }
+  dimension {
+    name = "http.method"
+    default = "GET"
+  }
+  dimensions_cache_size = 333
+  aggregation_temporality = "DELTA"
+  histogram {
+    unit = "s"
+    explicit {
+      buckets = ["100ms","200ms","500ms","750ms", "1s", "2s", "5s", "10s"]
+    }
+  }
+  metrics_flush_interval = "15s"
+  namespace = "test.namespace"
+  output {
+    metrics = [otelcol.exporter.otlp.basetotlp.input]
+  }
+}
+
+otelcol.exporter.prometheus "default" {
+  forward_to = [prometheus.remote_write.metrics_hello_observability.receiver]
+}
+otelcol.exporter.otlp "basetotlp" {
+  client {
+    endpoint = "tempo-us-central1.grafana.net:443"
+    auth     = otelcol.auth.basic.tempo.handler
+  }
+}
+otelcol.exporter.logging "defaultlogging" {
+  verbosity = "normal"
+}
