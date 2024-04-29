@@ -55,6 +55,10 @@ spec:
 
 
     processors:
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 75
+        spike_limit_percentage: 15    
       batch:
         timeout: 200ms
         send_batch_size: 512
@@ -91,7 +95,7 @@ spec:
     endpoint: http://otel-collector-collector.opentelemetry-collector.svc.cluster.local:4317
   propagators:
   - tracecontext
-  #- baggage
+  - baggage
   #- b3
   sampler:
     argument: '0.1'

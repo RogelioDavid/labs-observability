@@ -4,7 +4,7 @@ metadata:
   name: otel-collector
   namespace: opentelemetry-collector
 spec:
-  image: otel/opentelemetry-collector-contrib:0.97.0
+  image: otel/opentelemetry-collector-contrib:0.98.0
   replicas: 1
   config: |
     extensions:
@@ -55,6 +55,10 @@ spec:
 
 
     processors:
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 75
+        spike_limit_percentage: 15       
       batch:
         timeout: 200ms
         send_batch_size: 512
