@@ -1,0 +1,545 @@
+kind: ConfigMap
+metadata:
+  name: grafana-alloy
+  namespace: monitoring
+apiVersion: v1
+data:
+  config.alloy: |
+    logging {
+        level  = "debug"
+        format = "json"
+    }
+
+    // Prometheus configs
+    prometheus.remote_write "metrics_hello_observability" {
+      external_labels = {
+        monitor = "hello-observability",
+        cluster = "autopilot-cluster-app",
+      }
+      endpoint {
+        name = "hello-observability-6397c4"
+      url  = "https://prometheus-us-central1.grafana.net/api/prom/push"
+      basic_auth {
+        username = "821057"
+        password = "eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0="
+      }
+      }
+    }
+    discovery.relabel "metrics_hello_observability_ms_service_app_ms1" {
+      targets = [{
+        __address__ = "ms-service-app-ms1.applications.svc.cluster.local:8081",
+      }]
+      rule {
+        source_labels = ["trace_id"]
+        target_label  = "traceID"
+      }
+    }
+
+    discovery.relabel "metrics_hello_observability_ms_service_app_ms2" {
+      targets = [{
+        __address__ = "ms-service-app-ms2.applications.svc.cluster.local:8082",
+      }]
+      rule {
+        source_labels = ["trace_id"]
+        target_label  = "traceID"
+      }
+    }
+
+    discovery.relabel "metrics_hello_observability_hello_observability" {
+      targets = [{
+        __address__ = "hello-observability.applications.svc.cluster.local:8080",
+      }]
+      rule {
+        source_labels = ["trace_id"]
+        target_label  = "traceID"
+      }
+    }
+
+    prometheus.scrape "metrics_hello_observability_ms_service_app_ms1" {
+      targets         = discovery.relabel.metrics_hello_observability_ms_service_app_ms1.output
+      forward_to      = [prometheus.relabel.metrics_hello_observability_ms_service_app_ms1.receiver]
+      job_name        = "ms-service-app-ms1"
+      scrape_interval = "10s"
+    }
+
+    prometheus.scrape "metrics_hello_observability_ms_service_app_ms2" {
+      targets         = discovery.relabel.metrics_hello_observability_ms_service_app_ms2.output
+      forward_to      = [prometheus.relabel.metrics_hello_observability_ms_service_app_ms2.receiver]
+      job_name        = "ms-service-app-ms2"
+      scrape_interval = "10s"
+    }
+
+    prometheus.scrape "metrics_hello_observability_hello_observability" {
+      targets         = discovery.relabel.metrics_hello_observability_hello_observability.output
+      forward_to      = [prometheus.relabel.metrics_hello_observability_hello_observability.receiver]
+      job_name        = "hello-observability"
+      scrape_interval = "10s"
+    }
+
+    prometheus.relabel "metrics_hello_observability_ms_service_app_ms1" {
+      forward_to = [prometheus.remote_write.metrics_hello_observability.receiver]
+      rule {
+        source_labels = ["trace_id"]
+        target_label  = "traceID"
+      }
+    }
+
+    prometheus.relabel "metrics_hello_observability_ms_service_app_ms2" {
+      forward_to = [prometheus.remote_write.metrics_hello_observability.receiver]
+      rule {
+        source_labels = ["trace_id"]
+        target_label  = "traceID"
+      }
+    }
+
+    prometheus.relabel "metrics_hello_observability_hello_observability" {
+      forward_to = [prometheus.remote_write.metrics_hello_observability.receiver]
+      rule {
+        source_labels = ["trace_id"]
+        target_label  = "traceID"
+      }
+    }
+
+    // LOKI configs
+    loki.write "logs_default" {
+      endpoint {
+        url = "https://logs-prod-017.grafana.net/loki/api/v1/push"
+
+        basic_auth {
+          username = "409497"
+          password = "eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0="
+        }
+      }
+      external_labels = {
+        cluster = "autopilot-cluster-app",
+      }
+    }
+
+    local.file_match "logs_default_hello_observability" {
+      path_targets = [{
+        __address__ = "localhost",
+        __path__    = "/tmp/hello-observability.log",
+        job         = "hello-observability",
+      }]
+    }
+
+    local.file_match "logs_default_ms_service_app_ms1" {
+      path_targets = [{
+        __address__ = "localhost",
+        __path__    = "/tmp/ms-service-app-ms1.log",
+        job         = "ms-service-app-ms1",
+      }]
+    }
+
+    local.file_match "logs_default_ms_service_app_ms2" {
+      path_targets = [{
+        __address__ = "localhost",
+        __path__    = "/tmp/ms-service-app-ms2.log",
+        job         = "ms-service-app-ms2",
+      }]
+    }
+
+    loki.source.file "logs_default_hello_observability" {
+      targets    = local.file_match.logs_default_hello_observability.targets
+      forward_to = [loki.write.logs_default.receiver]
+    }
+
+
+    loki.source.file "logs_default_ms_service_app_ms1" {
+      targets    = local.file_match.logs_default_ms_service_app_ms1.targets
+      forward_to = [loki.write.logs_default.receiver]
+    }
+
+    loki.source.file "logs_default_ms_service_app_ms2" {
+      targets    = local.file_match.logs_default_ms_service_app_ms2.targets
+      forward_to = [loki.write.logs_default.receiver]
+    }
+
+    local.file_match "logs_default_tomcat_access" {
+      path_targets = [{
+        __address__ = "localhost",
+        __path__    = "/tmp/access_log.log",
+        job         = "tomcat-access",
+      }]
+    }
+
+    loki.source.file "logs_default_tomcat_access" {
+      targets    = local.file_match.logs_default_tomcat_access.targets
+      forward_to = [loki.write.logs_default.receiver]
+    }
+
+
+    discovery.kubernetes "logs_integrations_integrations_grafana_mimir_logs" {
+      role = "pod"
+    }
+
+    discovery.relabel "logs_integrations_integrations_grafana_mimir_logs" {
+      targets = discovery.kubernetes.logs_integrations_integrations_grafana_mimir_logs.targets
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_label_helm_sh_chart"]
+        regex         = "mimir-distributed-.*"
+        action        = "keep"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_node_name"]
+        target_label  = "__host__"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_namespace", "__meta_kubernetes_pod_container_name"]
+        separator     = "/"
+        target_label  = "job"
+      }
+
+      rule {
+        source_labels = ["cluster"]
+        separator     = ""
+        regex         = ""
+        target_label  = "cluster"
+        replacement   = "k8s-cluster"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_namespace"]
+        target_label  = "namespace"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_name"]
+        target_label  = "pod"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_container_name"]
+        target_label  = "name"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_container_name"]
+        target_label  = "container"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
+        separator     = "/"
+        target_label  = "__path__"
+        replacement   = "/var/log/pods/*$1/*.log"
+      }
+    }
+
+    local.file_match "logs_integrations_integrations_grafana_mimir_logs" {
+      path_targets = discovery.relabel.logs_integrations_integrations_grafana_mimir_logs.output
+    }
+
+    loki.process "logs_integrations_integrations_grafana_mimir_logs" {
+      forward_to = [loki.write.logs_default.receiver]
+
+      stage.cri { }
+    }
+
+    loki.source.file "logs_integrations_integrations_grafana_mimir_logs" {
+      targets    = local.file_match.logs_integrations_integrations_grafana_mimir_logs.targets
+      forward_to = [loki.process.logs_integrations_integrations_grafana_mimir_logs.receiver]
+    }
+
+    discovery.kubernetes "logs_integrations_integrations_kubernetes_pod_logs" {
+      role = "pod"
+    }
+
+    discovery.relabel "logs_integrations_integrations_kubernetes_pod_logs" {
+      targets = discovery.kubernetes.logs_integrations_integrations_kubernetes_pod_logs.targets
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_node_name"]
+        target_label  = "__host__"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_namespace", "__meta_kubernetes_pod_name"]
+        separator     = "/"
+        target_label  = "job"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_namespace"]
+        target_label  = "namespace"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_name"]
+        target_label  = "pod"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_container_name"]
+        target_label  = "container"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
+        separator     = "/"
+        target_label  = "__path__"
+        replacement   = "/var/log/pods/*$1/*.log"
+      }
+    }
+
+    local.file_match "logs_integrations_integrations_kubernetes_pod_logs" {
+      path_targets = discovery.relabel.logs_integrations_integrations_kubernetes_pod_logs.output
+    }
+
+    loki.process "logs_integrations_integrations_kubernetes_pod_logs" {
+      forward_to = [loki.write.logs_default.receiver]
+
+      stage.docker { }
+    }
+
+    loki.source.file "logs_integrations_integrations_kubernetes_pod_logs" {
+      targets    = local.file_match.logs_integrations_integrations_kubernetes_pod_logs.targets
+      forward_to = [loki.process.logs_integrations_integrations_kubernetes_pod_logs.receiver]
+    }
+
+
+
+    // OtelCol configs
+
+    otelcol.auth.basic "tempo" {
+      username = 406010
+      password = "eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0="
+    }
+    otelcol.auth.basic "promp" {
+      username = 406010
+      password ="eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0="
+    }
+
+    otelcol.processor.batch "processorbatch" {
+      output {
+        metrics = [otelcol.exporter.otlp.basetotlp.input]
+        logs    = [otelcol.exporter.otlp.basetotlp.input]
+        traces  = [otelcol.exporter.otlp.basetotlp.input]
+      }
+    }
+    otelcol.receiver.otlp "receiverbase" {
+      grpc {
+        endpoint = "0.0.0.0:4317"
+      }
+      output {
+        metrics = [otelcol.processor.batch.processorbatch.input]
+        logs    = [otelcol.processor.batch.processorbatch.input]
+        traces  = [otelcol.exporter.otlp.basetotlp.input,
+            otelcol.connector.servicegraph.servicegraphbase.input,
+            otelcol.connector.spanmetrics.spanmetricsbse.input,
+            otelcol.processor.batch.processorbatch.input]
+      }
+    }
+    otelcol.connector.servicegraph "servicegraphbase" {
+      dimensions = ["http.method", "http.target"]
+      latency_histogram_buckets = ["100ms", "250ms", "500ms", "1s", "2s", "5s", "10s"]	
+      store {
+      max_items = 20
+      ttl = "2s" 
+      }
+      output {
+        metrics = [otelcol.exporter.prometheus.default.input]
+      }
+    }
+    otelcol.connector.spanmetrics "spanmetricsbse" {
+      dimension {
+        name = "http.status_code"
+      }
+      dimension {
+        name = "http.method"
+        default = "GET"
+      }
+      dimensions_cache_size = 333
+      aggregation_temporality = "DELTA"
+      histogram {
+        unit = "s"
+        explicit {
+          buckets = ["100ms","200ms","500ms","750ms", "1s", "2s", "5s", "10s"]
+        }
+      }
+      metrics_flush_interval = "15s"
+      namespace = "test.namespace"
+      output {
+        metrics = [otelcol.exporter.otlp.basetotlp.input]
+      }
+    }
+
+    otelcol.exporter.prometheus "default" {
+      forward_to = [prometheus.remote_write.metrics_hello_observability.receiver]
+    }
+    otelcol.exporter.otlp "basetotlp" {
+      client {
+        endpoint = "tempo-us-central1.grafana.net:443"
+        auth     = otelcol.auth.basic.tempo.handler
+      }
+    }
+    otelcol.exporter.logging "defaultlogging" {
+      verbosity = "normal"
+    }
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: grafana-alloy
+  namespace: monitoring
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: grafana-alloy
+  namespace: monitoring
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  - nodes/proxy
+  - nodes/metrics
+  - services
+  - endpoints
+  - pods
+  - events
+  - ingresses
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+- nonResourceURLs:
+  - /metrics
+  verbs:
+  - get
+  - list
+  - watch  
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: grafana-alloy
+  namespace: monitoring
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: grafana-alloy
+subjects:
+- kind: ServiceAccount
+  name: grafana-alloy
+  namespace: monitoring
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: grafana-alloy
+  name: grafana-alloy
+  namespace: monitoring
+spec:
+  clusterIP: None
+  ports:
+  - name: grafana-alloy-http-metrics
+    port: 80
+    targetPort: 80
+  selector:
+    name: grafana-alloy
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lb-grafana-alloy
+  namespace: monitoring
+  labels:
+    app: grafana-alloy
+spec:
+  ports:
+  - name: grafana-alloy-otlp-cgrp
+    port: 4317
+    targetPort: 4317
+  - name: grafana-alloy-otlp-http
+    port: 4318
+    targetPort: 4318
+  - name: grafana-agent-otlp-otr
+    port: 9464
+    targetPort: 9464
+  selector:
+    name: grafana-alloy
+  type: "LoadBalancer"
+  loadBalancerIP: ""    
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: grafana-alloy
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: grafana-alloy
+  serviceName: grafana-alloy
+  template:
+    metadata:
+      labels:
+        name: grafana-alloy
+    spec:
+      containers:
+      - args:
+          - run
+          - /etc/agent/config.alloy
+          - --storage.path=/var/lib/alloy/data
+          - --server.http.listen-addr=0.0.0.0:12345      
+#      - command:
+#        - run
+#        - /etc/agent/config.alloy
+#        - --storage.path=/var/lib/alloy/data
+#        - --server.http.listen-addr=0.0.0.0:12345
+        env:
+        - name: HOSTNAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        image: grafana/alloy:latest
+        imagePullPolicy: IfNotPresent
+        name: grafana-alloy
+        ports:
+        - containerPort: 80
+          name: http-metrics
+        - containerPort: 4317
+        - containerPort: 4318
+        - containerPort: 9464        
+        volumeMounts:
+        - mountPath: /etc/agent/config.alloy
+          name: grafana-alloy
+      serviceAccountName: grafana-alloy
+      volumes:
+      - configMap:
+          name: grafana-alloy
+        name: grafana-alloy
+  updateStrategy:
+    type: RollingUpdate
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: agent-wal
+      namespace: monitoring
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 5Gi          
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-alloy-claim0
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+status: {}
