@@ -490,11 +490,6 @@ spec:
           - /etc/agent/config.alloy
           - --storage.path=/var/lib/alloy/data
           - --server.http.listen-addr=0.0.0.0:12345      
-#      - command:
-#        - run
-#        - /etc/agent/config.alloy
-#        - --storage.path=/var/lib/alloy/data
-#        - --server.http.listen-addr=0.0.0.0:12345
         env:
         - name: HOSTNAME
           valueFrom:
