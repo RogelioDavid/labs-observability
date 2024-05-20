@@ -59,19 +59,21 @@ Por otro lado  mantiene los Mismo Pros / Cons del modo estatico, ademas maneja p
 ````
    - kubectl apply -f .\minifiest\cluster\00-namespace.yaml
 ````
-## 3.- instalacion Grafana Agente modo Flow
+
+## 3.- instalar los Custom Resource para soportar Open Telemetry Collector
+
+````
+  - kubectl apply  -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.4/cert-manager.yaml
+  - kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml
+````
+
+## 4.- instalacion Grafana Agente modo Flow
 
 ````
    -  kubectl apply -f .\grafana-alloy\grafana-agent-alloy.yaml
    -  
 ````
 
-## 4.- instalar los Custom Resource para soportar Open Telemetry Collector
-
-````
-  - kubectl apply  -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.4/cert-manager.yaml
-  - kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml
-````
 
 ## 5.- instalar el collector en modo side card apuntando al grafana-agent
 
@@ -79,7 +81,7 @@ Por otro lado  mantiene los Mismo Pros / Cons del modo estatico, ademas maneja p
   - kubectl apply -f .\grafana-alloy\otel-config-auto.yaml
 ````
 
-## 6.- instalar los microservicios utilizados anteriormente 
+## 6.- instalar los microservicios utilizados sin utilizacion de Sidecar de otel 
 ````
-  -  kubectl apply -f .\minifiest\apps\replicaset-apps-auto.yml 
+  -  kubectl delete -f .\minifiest\apps\replicaset-apps-auto.yml 
 ````

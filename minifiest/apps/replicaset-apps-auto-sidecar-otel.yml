@@ -16,6 +16,7 @@ spec:
       labels:
         app: hello-observability
       annotations:
+        sidecar.opentelemetry.io/inject: "opentelemetry-collector/otel-collector"
         instrumentation.opentelemetry.io/inject-java: "opentelemetry-collector/auto-instrumentation"
         instrumentation.opentelemetry.io/container-names: "app"             
     spec:
@@ -70,6 +71,7 @@ spec:
       labels:
         app: ms-service-app-ms2
       annotations:
+        sidecar.opentelemetry.io/inject: "opentelemetry-collector/otel-collector"
         instrumentation.opentelemetry.io/inject-java: "opentelemetry-collector/auto-instrumentation"
         instrumentation.opentelemetry.io/container-names: "app"             
     spec:
@@ -124,6 +126,7 @@ spec:
       labels:
         app: ms-service-app-ms1
       annotations:
+        sidecar.opentelemetry.io/inject: "opentelemetry-collector/otel-collector"
         instrumentation.opentelemetry.io/inject-java: "opentelemetry-collector/auto-instrumentation"
         instrumentation.opentelemetry.io/container-names: "app"             
 
