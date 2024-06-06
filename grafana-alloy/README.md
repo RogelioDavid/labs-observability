@@ -83,5 +83,5 @@ Por otro lado  mantiene los Mismo Pros / Cons del modo estatico, ademas maneja p
 
 ## 6.- instalar los microservicios utilizados sin utilizacion de Sidecar de otel 
 ````
-  -  kubectl delete -f .\minifiest\apps\replicaset-apps-auto.yml 
+  -  kubectl apply -f .\minifiest\apps\replicaset-apps-auto.yml 
 ````

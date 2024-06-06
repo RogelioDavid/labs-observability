@@ -11,7 +11,7 @@ spec:
   #- baggage
   #- b3
   sampler:
-    argument: '0.3'
+    argument: '1'
     type: parentbased_traceidratio
 
   java:
