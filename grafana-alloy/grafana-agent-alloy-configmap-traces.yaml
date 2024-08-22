@@ -1,0 +1,118 @@
+kind: ConfigMap
+metadata:
+  name: grafana-alloy-traces
+  namespace: monitoring
+apiVersion: v1
+data:
+  config.alloy: |
+    logging {
+        level  = "debug"
+        format = "json"
+    }
+    // OtelCol configs
+
+    otelcol.auth.basic "tempo" {
+      username = 406010
+      password = "eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0="
+    }
+    otelcol.auth.basic "promp" {
+      username = 406010
+      password ="eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0="
+    }
+
+    otelcol.receiver.otlp "receiverbase" {
+      grpc {
+        endpoint = "0.0.0.0:4317"
+      }
+      output {
+        metrics = [otelcol.processor.batch.processorbatch.input]
+        logs    = [otelcol.processor.batch.processorbatch.input]
+        traces  = [otelcol.processor.memory_limiter.memory_limiter.input]
+      }
+    }
+
+    otelcol.processor.memory_limiter "memory_limiter" {
+      check_interval = "5s"
+      limit = "400MiB"        // Hard Limit
+      spike_limit = "100MiB"  // Soft Limit = Hard Limit - spike_limit = 300MiB
+      output {
+        traces  = [otelcol.processor.filter.default.input]
+      }
+    } 
+
+    otelcol.processor.filter "default" {
+      error_mode = "ignore"
+      traces {
+        span = [
+          "IsMatch(attributes[\"http.route\"], \".*prometheus.*\")",
+          "IsMatch(attributes[\"http.route\"], \".*health.*\")",
+          "IsMatch(attributes[\"http.target\"], \".*health.*\")",
+          "IsMatch(attributes[\"http.target\"], \".*health_check.*\")",
+          "IsMatch(attributes[\"db.operation\"], \".*PING.*\")",
+          "IsMatch(attributes[\"express.type\"], \".*middleware.*\")",
+          "IsMatch(attributes[\"express.type\"], \".*router.*\")",
+          "IsMatch(attributes[\"db.operation\"], \".*EXIST.*\")",
+          "IsMatch(attributes[\"express.name\"], \".*request handler.*\")",
+          "IsMatch(attributes[\"net.peer.port\"], \".*9000.*\")",
+          "IsMatch(attributes[\"db.system\"], \".*redis.*\")",
+        ]
+      }
+
+      output {
+        traces  = [otelcol.processor.batch.processorbatch.input]
+      }
+    }
+
+
+    prometheus.exporter.self "self_metrics" {}
+
+    prometheus.scrape "scrape_self" {
+      targets    = prometheus.exporter.self.self_metrics.targets
+      forward_to = [otelcol.receiver.prometheus.prom_to_otlp.receiver]
+    }
+
+    otelcol.receiver.prometheus "prom_to_otlp" {
+      output {
+        metrics = [otelcol.processor.batch.processorbatch.input]
+      }
+    }
+    otelcol.processor.batch "processorbatch" {
+      timeout = "10s"
+      send_batch_size = 10000
+      send_batch_max_size = 11000
+      output {
+        metrics = [otelcol.exporter.otlp.basetotlp.input]
+        logs    = [otelcol.exporter.otlp.basetotlp.input]
+        traces  = [otelcol.exporter.otlp.basetotlp.input]
+      }
+    }
+
+
+    otelcol.exporter.prometheus "default" {
+      forward_to = [prometheus.remote_write.metrics_hello_observability.receiver]
+    }
+
+    otelcol.exporter.otlp "basetotlp" {
+      client {
+        endpoint = "tempo-us-central1.grafana.net:443"
+        auth     = otelcol.auth.basic.tempo.handler
+      }
+    }
+    otelcol.exporter.logging "defaultlogging" {
+      verbosity = "normal"
+    }
+
+    prometheus.remote_write "metrics_hello_observability" {
+      external_labels = {
+        monitor = "hello-observability",
+        cluster = "autopilot-cluster-app",
+      }
+      endpoint {
+        name = "hello-observability-6397c4"
+      url  = "https://prometheus-us-central1.grafana.net/api/prom/push"
+      basic_auth {
+        username = "821057"
+        password = "eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0="
+      }
+      }
+    }

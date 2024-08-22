@@ -67,7 +67,7 @@ Por otro lado  mantiene los Mismo Pros / Cons del modo estatico, ademas maneja p
   - kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml
 ````
 
-## 4.- instalacion Grafana Agente modo Flow
+## 4.- instalacion Grafana Alloy
 
 ````
    -  kubectl apply -f .\grafana-alloy\grafana-agent-alloy.yaml
@@ -85,3 +85,8 @@ Por otro lado  mantiene los Mismo Pros / Cons del modo estatico, ademas maneja p
 ````
   -  kubectl apply -f .\minifiest\apps\replicaset-apps-auto.yml 
 ````
+
+
+
+
+https://github.com/grafana/k8s-monitoring-helm/tree/main

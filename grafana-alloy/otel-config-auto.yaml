@@ -5,7 +5,7 @@ metadata:
   namespace: opentelemetry-collector
 spec:
   exporter:
-    endpoint: http://lb-grafana-alloy.monitoring.svc.cluster.local:4317
+    endpoint: http://lb-grafana-alloy-traces.monitoring.svc.cluster.local:4317
   propagators:
   - tracecontext
   #- baggage

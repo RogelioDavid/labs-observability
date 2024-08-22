@@ -52,7 +52,7 @@ services:
       - "8082:8082"
 
   grafana-alloy:
-    image: grafana/alloy:latest
+    image: grafana/alloy:v1.3.0
     volumes:
       - ./config/config.alloy:/etc/agent/config.alloy
       - ./logs/hello-observability.log:/tmp/hello-observability.log
