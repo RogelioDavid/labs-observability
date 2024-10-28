@@ -1,15 +1,16 @@
-version: "3"
+version: '3.4'
 services:
 
   # The hello-observability application
   hello-observability.applications.svc.cluster.local:
-    image: rmendoza/hello-observability-manual:v2
+    image: rmendoza/hello-observability-manual:v3
     volumes:
       - ./logs/hello-observability.log:/tmp/hello-observability.log
       - ./logs/access_log.log:/tmp/access_log.log
     environment:
       JAVA_TOOL_OPTIONS: -javaagent:./opentelemetry-javaagent.jar
       OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-col:4317
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-col:4317
       OTEL_SERVICE_NAME: hello-observability
       OTEL_TRACES_EXPORTER: otlp
       HOSTNAME: hello-observability.applications.svc.cluster.local
@@ -18,7 +19,7 @@ services:
 
 
   ms-service-app-ms1.applications.svc.cluster.local:
-    image: rmendoza/ms-service-app-ms1-manual:v2
+    image: rmendoza/ms-service-app-ms1-manual:v3
     volumes:
       # Log files. They are all also accessible to the agent container,
       # through docker volume mount
@@ -28,6 +29,7 @@ services:
       # Tracing configuration
       JAVA_TOOL_OPTIONS: -javaagent:./opentelemetry-javaagent.jar    
       OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-col:4317
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-col:4317
       OTEL_SERVICE_NAME: ms-service-app-ms1
       OTEL_TRACES_EXPORTER: otlp
       HOSTNAME: ms-service-app-ms1.applications.svc.cluster.local
@@ -35,7 +37,7 @@ services:
       - "8081:8081"
 
   ms-service-app-ms2.applications.svc.cluster.local:
-    image: rmendoza/ms-service-app-ms2-manual:v2
+    image: rmendoza/ms-service-app-ms2-manual:v3
     volumes:
       # Log files. They are all also accessible to the agent container,
       # through docker volume mount
@@ -45,6 +47,7 @@ services:
       # Tracing configuration
       JAVA_TOOL_OPTIONS: -javaagent:./opentelemetry-javaagent.jar    
       OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-col:4317
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-col:4317
       OTEL_SERVICE_NAME: ms-service-app-ms2
       OTEL_TRACES_EXPORTER: otlp
       HOSTNAME: ms-service-app-ms2.applications.svc.cluster.local
@@ -53,11 +56,11 @@ services:
 
 
   # Our load generator
-  load-generator:
-    image: curlimages/curl:latest
-    volumes:
-      - ../load-generator.sh:/tmp/load-generator.sh
-    command: /bin/sh -c "/tmp/load-generator.sh"
+#  load-generator:
+#    image: curlimages/curl:latest
+#    volumes:
+#      - ../load-generator.sh:/tmp/load-generator.sh
+#    command: /bin/sh -c "/tmp/load-generator.sh"
   
   agent-operator:
     image: grafana/agent:v0.33.2
@@ -100,12 +103,12 @@ services:
       HOSTNAME: agent-loki
 
   otel-col:
-    image: otel/opentelemetry-collector-contrib:0.97.0
+    image: otel/opentelemetry-collector-contrib:0.110.0
     container_name: otel-col
     deploy:
       resources:
         limits:
-          memory: 200M
+          memory: 256M
     restart: unless-stopped
     command: [ "--config=/etc/otelcol-config.yml", "--config=/etc/otelcol-config-extras.yml" ]
     volumes:

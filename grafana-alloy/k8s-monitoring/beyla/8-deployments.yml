@@ -1,0 +1,396 @@
+
+# Source: k8s-monitoring/charts/beyla/templates/daemon-set.yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: grafana-k8s-monitoring-beyla
+  namespace: monitoring
+  labels:
+    helm.sh/chart: beyla-1.4.3
+    app.kubernetes.io/name: beyla
+    app.kubernetes.io/instance: grafana-k8s-monitoring
+    app.kubernetes.io/version: "1.8.4"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: beyla
+    app.kubernetes.io/component: workload
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: beyla
+      app.kubernetes.io/instance: grafana-k8s-monitoring
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        checksum/config: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
+        k8s.grafana.com/logs.job: integrations/beyla
+      labels:
+        helm.sh/chart: beyla-1.4.3
+        app.kubernetes.io/name: beyla
+        app.kubernetes.io/instance: grafana-k8s-monitoring
+        app.kubernetes.io/version: "1.8.4"
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/part-of: beyla
+        app.kubernetes.io/component: workload
+    spec:
+      serviceAccountName: grafana-k8s-monitoring-beyla
+      hostPID: true
+      containers:
+        - name: beyla
+          image: docker.io/grafana/beyla:1.8.4
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            privileged: true
+          ports:
+          - name: metrics
+            containerPort: 9090
+            protocol: TCP
+          env:
+            - name: BEYLA_CONFIG_PATH
+              value: "/etc/beyla/config/beyla-config.yml"
+          volumeMounts:
+            - mountPath: /etc/beyla/config
+              name: beyla-config
+      volumes:
+        - name: beyla-config
+          configMap:
+            name: grafana-k8s-monitoring-beyla
+---
+# Source: k8s-monitoring/charts/prometheus-node-exporter/templates/daemonset.yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: grafana-k8s-monitoring-prometheus-node-exporter
+  namespace: monitoring
+  labels:
+    helm.sh/chart: prometheus-node-exporter-4.39.0
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: metrics
+    app.kubernetes.io/part-of: prometheus-node-exporter
+    app.kubernetes.io/name: prometheus-node-exporter
+    app.kubernetes.io/instance: grafana-k8s-monitoring
+    app.kubernetes.io/version: "1.8.2"
+    release: grafana-k8s-monitoring
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: prometheus-node-exporter
+      app.kubernetes.io/instance: grafana-k8s-monitoring
+  revisionHistoryLimit: 10
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+        k8s.grafana.com/logs.job: integrations/node_exporter
+      labels:
+        helm.sh/chart: prometheus-node-exporter-4.39.0
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/component: metrics
+        app.kubernetes.io/part-of: prometheus-node-exporter
+        app.kubernetes.io/name: prometheus-node-exporter
+        app.kubernetes.io/instance: grafana-k8s-monitoring
+        app.kubernetes.io/version: "1.8.2"
+        release: grafana-k8s-monitoring
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 65534
+        runAsGroup: 65534
+        runAsNonRoot: true
+        runAsUser: 65534
+      serviceAccountName: grafana-k8s-monitoring-prometheus-node-exporter
+      containers:
+        - name: node-exporter
+          image: quay.io/prometheus/node-exporter:v1.8.2
+          imagePullPolicy: IfNotPresent
+          args:
+            - --path.procfs=/host/proc
+            - --path.sysfs=/host/sys
+            - --path.rootfs=/host/root
+            - --path.udev.data=/host/root/run/udev/data
+            - --web.listen-address=[$(HOST_IP)]:9100
+          securityContext:
+            readOnlyRootFilesystem: true
+          env:
+            - name: HOST_IP
+              value: 0.0.0.0
+          ports:
+            - name: metrics
+              containerPort: 9100
+              protocol: TCP
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              httpHeaders:
+              path: /
+              port: 9100
+              scheme: HTTP
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              httpHeaders:
+              path: /
+              port: 9100
+              scheme: HTTP
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          volumeMounts:
+            - name: proc
+              mountPath: /host/proc
+              readOnly:  true
+            - name: sys
+              mountPath: /host/sys
+              readOnly: true
+            - name: root
+              mountPath: /host/root
+              mountPropagation: HostToContainer
+              readOnly: true
+      hostNetwork: true
+      hostPID: true
+      hostIPC: false
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: eks.amazonaws.com/compute-type
+                operator: NotIn
+                values:
+                - fargate
+      nodeSelector:
+        kubernetes.io/os: linux
+      tolerations:
+        - effect: NoSchedule
+          operator: Exists
+      volumes:
+        - name: proc
+          hostPath:
+            path: /proc
+        - name: sys
+          hostPath:
+            path: /sys
+        - name: root
+          hostPath:
+            path: /
+---
+# Source: k8s-monitoring/charts/kube-state-metrics/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana-k8s-monitoring-kube-state-metrics
+  namespace: monitoring
+  labels:    
+    helm.sh/chart: kube-state-metrics-5.25.1
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: metrics
+    app.kubernetes.io/part-of: kube-state-metrics
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/instance: grafana-k8s-monitoring
+    app.kubernetes.io/version: "2.13.0"
+    release: grafana-k8s-monitoring
+spec:
+  selector:
+    matchLabels:      
+      app.kubernetes.io/name: kube-state-metrics
+      app.kubernetes.io/instance: grafana-k8s-monitoring
+  replicas: 1
+  strategy:
+    type: Recreate
+  revisionHistoryLimit: 10
+  template:
+    metadata:
+      labels:        
+        helm.sh/chart: kube-state-metrics-5.25.1
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/component: metrics
+        app.kubernetes.io/part-of: kube-state-metrics
+        app.kubernetes.io/name: kube-state-metrics
+        app.kubernetes.io/instance: grafana-k8s-monitoring
+        app.kubernetes.io/version: "2.13.0"
+        release: grafana-k8s-monitoring
+    spec:
+      automountServiceAccountToken: true
+      hostNetwork: false
+      serviceAccountName: grafana-k8s-monitoring-kube-state-metrics
+      securityContext:
+        fsGroup: 65534
+        runAsGroup: 65534
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: kube-state-metrics
+        args:
+        - --port=8080
+        - --resources=certificatesigningrequests,configmaps,cronjobs,daemonsets,deployments,endpoints,horizontalpodautoscalers,ingresses,jobs,leases,limitranges,mutatingwebhookconfigurations,namespaces,networkpolicies,nodes,persistentvolumeclaims,persistentvolumes,poddisruptionbudgets,pods,replicasets,replicationcontrollers,resourcequotas,secrets,services,statefulsets,storageclasses,validatingwebhookconfigurations,volumeattachments
+        - --metric-labels-allowlist=nodes=[agentpool,alpha.eksctl.io/cluster-name,alpha.eksctl.io/nodegroup-name,beta.kubernetes.io/instance-type,cloud.google.com/gke-nodepool,cluster_name,ec2_amazonaws_com_Name,ec2_amazonaws_com_aws_autoscaling_groupName,ec2_amazonaws_com_aws_autoscaling_group_name,ec2_amazonaws_com_name,eks_amazonaws_com_nodegroup,k8s_io_cloud_provider_aws,karpenter.sh/nodepool,kubernetes.azure.com/cluster,kubernetes.io/arch,kubernetes.io/hostname,kubernetes.io/os,node.kubernetes.io/instance-type,topology.kubernetes.io/region,topology.kubernetes.io/zone]
+        imagePullPolicy: IfNotPresent
+        image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.13.0
+        ports:
+        - containerPort: 8080
+          name: "http"
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            httpHeaders:
+            path: /livez
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            httpHeaders:
+            path: /readyz
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        resources:
+          {}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+      nodeSelector:
+        kubernetes.io/os: linux
+      tolerations:
+        - effect: NoSchedule
+          key: kubernetes.io/arch
+          operator: Equal
+          value: arm64
+---
+# Source: k8s-monitoring/charts/alloy/templates/controllers/statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: grafana-k8s-monitoring-alloy
+  labels:
+    helm.sh/chart: alloy-0.9.1
+    app.kubernetes.io/name: alloy
+    app.kubernetes.io/instance: grafana-k8s-monitoring
+    
+    app.kubernetes.io/version: "v1.4.2"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: alloy
+spec:
+  replicas: 1
+  podManagementPolicy: Parallel
+  minReadySeconds: 10
+  serviceName: grafana-k8s-monitoring-alloy
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: alloy
+      app.kubernetes.io/instance: grafana-k8s-monitoring
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: alloy
+        k8s.grafana.com/logs.job: integrations/alloy
+      labels:
+        app.kubernetes.io/name: alloy
+        app.kubernetes.io/instance: grafana-k8s-monitoring
+    spec:
+      serviceAccountName: grafana-k8s-monitoring-alloy
+      containers:
+        - name: alloy
+          image: docker.io/grafana/alloy:v1.4.2
+          imagePullPolicy: IfNotPresent
+          args:
+            - run
+            - /etc/alloy/config.alloy
+            - --storage.path=/tmp/alloy
+            - --server.http.listen-addr=0.0.0.0:12345
+            - --server.http.ui-path-prefix=/
+            - --cluster.enabled=true
+            - --cluster.join-addresses=grafana-k8s-monitoring-alloy-cluster
+            - --cluster.name="alloy"
+            - --stability.level=generally-available
+          env:
+            - name: ALLOY_DEPLOY_MODE
+              value: "helm"
+            - name: HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          ports:
+            - containerPort: 12345
+              name: http-metrics
+            - containerPort: 4317
+              name: otlp-grpc
+              protocol: TCP
+            - containerPort: 4318
+              name: otlp-http
+              protocol: TCP
+            - containerPort: 9999
+              name: prometheus
+              protocol: TCP
+            - containerPort: 14250
+              name: jaeger-grpc
+              protocol: TCP
+            - containerPort: 6832
+              name: jaeger-binary
+              protocol: TCP
+            - containerPort: 6831
+              name: jaeger-compact
+              protocol: TCP
+            - containerPort: 14268
+              name: jaeger-http
+              protocol: TCP
+            - containerPort: 9411
+              name: zipkin
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 12345
+              scheme: HTTP
+            initialDelaySeconds: 10
+            timeoutSeconds: 1
+          volumeMounts:
+            - name: config
+              mountPath: /etc/alloy
+        - name: config-reloader
+          image: ghcr.io/jimmidyson/configmap-reload:v0.12.0
+          args:
+            - --volume-dir=/etc/alloy
+            - --webhook-url=http://localhost:12345/-/reload
+          volumeMounts:
+            - name: config
+              mountPath: /etc/alloy
+          resources:
+            requests:
+              cpu: 1m
+              memory: 5Mi
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        kubernetes.io/os: linux
+      tolerations:
+        - effect: NoSchedule
+          key: kubernetes.io/arch
+          operator: Equal
+          value: arm64
+      volumes:
+        - name: config
+          configMap:
+            name: grafana-k8s-monitoring-alloy
+ 

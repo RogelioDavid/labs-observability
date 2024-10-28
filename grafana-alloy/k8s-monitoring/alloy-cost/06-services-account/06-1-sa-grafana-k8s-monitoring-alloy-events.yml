@@ -1,0 +1,16 @@
+# Source: k8s-monitoring/charts/alloy-events/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: grafana-k8s-monitoring-alloy-events
+  namespace: monitoring
+  labels:
+    helm.sh/chart: alloy-events-0.9.1
+    app.kubernetes.io/name: alloy-events
+    app.kubernetes.io/instance: grafana-k8s-monitoring
+    
+    app.kubernetes.io/version: "v1.4.2"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: alloy
+    app.kubernetes.io/component: rbac
+---

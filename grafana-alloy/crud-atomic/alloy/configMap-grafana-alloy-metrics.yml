@@ -1,0 +1,102 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-alloy-metrics
+  namespace: monitoring
+data:
+  config.alloy: |
+    logging {
+        level  = "debug"
+        format = "json"
+    }
+
+    // Prometheus configs
+    prometheus.remote_write "metrics_hello_observability" {
+      external_labels = {
+        monitor = "hello-observability",
+        cluster = "autopilot-cluster-app",
+      }
+      endpoint {
+        name = "hello-observability-6397c4"
+      url  = "https://prometheus-us-central1.grafana.net/api/prom/push"
+      basic_auth {
+        username = "821057"
+        password = "eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0="
+      }
+      }
+    }
+    discovery.relabel "metrics_hello_observability_ms_service_app_ms1" {
+      targets = [{
+        __address__ = "ms-service-app-ms1.applications.svc.cluster.local:8081",
+      }]
+      rule {
+        source_labels = ["trace_id"]
+        target_label  = "traceID"
+      }
+    }
+
+    discovery.relabel "metrics_hello_observability_ms_service_app_ms2" {
+      targets = [{
+        __address__ = "ms-service-app-ms2.applications.svc.cluster.local:8082",
+      }]
+      rule {
+        source_labels = ["trace_id"]
+        target_label  = "traceID"
+      }
+    }
+
+    discovery.relabel "metrics_hello_observability_hello_observability" {
+      targets = [{
+        __address__ = "hello-observability.applications.svc.cluster.local:8080",
+      }]
+      rule {
+        source_labels = ["trace_id"]
+        target_label  = "traceID"
+      }
+    }
+
+    prometheus.scrape "metrics_hello_observability_ms_service_app_ms1" {
+      targets         = discovery.relabel.metrics_hello_observability_ms_service_app_ms1.output
+      forward_to      = [prometheus.relabel.metrics_hello_observability_ms_service_app_ms1.receiver]
+      job_name        = "ms-service-app-ms1"
+      scrape_interval = "10s"
+    }
+
+    prometheus.scrape "metrics_hello_observability_ms_service_app_ms2" {
+      targets         = discovery.relabel.metrics_hello_observability_ms_service_app_ms2.output
+      forward_to      = [prometheus.relabel.metrics_hello_observability_ms_service_app_ms2.receiver]
+      job_name        = "ms-service-app-ms2"
+      scrape_interval = "10s"
+    }
+
+    prometheus.scrape "metrics_hello_observability_hello_observability" {
+      targets         = discovery.relabel.metrics_hello_observability_hello_observability.output
+      forward_to      = [prometheus.relabel.metrics_hello_observability_hello_observability.receiver]
+      job_name        = "hello-observability"
+      scrape_interval = "10s"
+    }
+
+    prometheus.relabel "metrics_hello_observability_ms_service_app_ms1" {
+      forward_to = [prometheus.remote_write.metrics_hello_observability.receiver]
+      rule {
+        source_labels = ["trace_id"]
+        target_label  = "traceID"
+      }
+    }
+
+    prometheus.relabel "metrics_hello_observability_ms_service_app_ms2" {
+      forward_to = [prometheus.remote_write.metrics_hello_observability.receiver]
+      rule {
+        source_labels = ["trace_id"]
+        target_label  = "traceID"
+      }
+    }
+
+    prometheus.relabel "metrics_hello_observability_hello_observability" {
+      forward_to = [prometheus.remote_write.metrics_hello_observability.receiver]
+      rule {
+        source_labels = ["trace_id"]
+        target_label  = "traceID"
+      }
+    }
+ 

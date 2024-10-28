@@ -1,0 +1,98 @@
+version: "3.4"
+services:
+
+  # The hello-observability application
+  hello-observability.applications.svc.cluster.local:
+    image: rmendoza/hello-observability-manual:v2
+    volumes:
+      - ./logs/hello-observability.log:/tmp/hello-observability.log
+      - ./logs/access_log.log:/tmp/access_log.log
+    environment:
+      JAVA_TOOL_OPTIONS: -javaagent:./opentelemetry-javaagent.jar
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://grafana-alloy-traces:4317
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://grafana-alloy-traces:4317
+      OTEL_SERVICE_NAME: hello-observability
+      OTEL_TRACES_EXPORTER: otlp
+      HOSTNAME: hello-observability.applications.svc.cluster.local
+    ports:
+      - "8080:8080"
+
+
+  ms-service-app-ms1.applications.svc.cluster.local:
+    image: rmendoza/ms-service-app-ms1-manual:v2
+    volumes:
+      # Log files. They are all also accessible to the agent container,
+      # through docker volume mount
+      - ./logs/ms-service-app-ms1.log:/tmp/ms-service-app-ms1.log
+      - ./logs/access_log.log:/tmp/access_log.log
+    environment:
+      # Tracing configuration
+      JAVA_TOOL_OPTIONS: -javaagent:./opentelemetry-javaagent.jar    
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://grafana-alloy-traces:4317
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://grafana-alloy-traces:4317
+      OTEL_SERVICE_NAME: ms-service-app-ms1
+      OTEL_TRACES_EXPORTER: otlp
+      HOSTNAME: ms-service-app-ms1.applications.svc.cluster.local
+    ports:
+      - "8081:8081"
+
+  ms-service-app-ms2.applications.svc.cluster.local:
+    image: rmendoza/ms-service-app-ms2-manual:v2
+    volumes:
+      # Log files. They are all also accessible to the agent container,
+      # through docker volume mount
+      - ./logs/ms-service-app-ms2.log:/tmp/ms-service-app-ms2.log
+      - ./logs/access_log.log:/tmp/access_log.log
+    environment:
+      # Tracing configuration
+      JAVA_TOOL_OPTIONS: -javaagent:./opentelemetry-javaagent.jar    
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://grafana-alloy-traces:4317
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://grafana-alloy-traces:4317
+      OTEL_SERVICE_NAME: ms-service-app-ms2
+      OTEL_TRACES_EXPORTER: otlp
+      HOSTNAME: ms-service-app-ms2.applications.svc.cluster.local
+    ports:
+      - "8082:8082"
+
+  grafana-alloy-traces:
+    image: grafana/alloy:v1.4.0
+    volumes:
+      - ./config/config-traces.alloy:/etc/agent/config.alloy
+    command:
+      - run
+      - /etc/agent/config.alloy
+      - --storage.path=/var/lib/alloy/data
+      - --server.http.listen-addr=0.0.0.0:12345
+ #     - -config.file=/etc/agent/config.river
+ #     - -config.file=/etc/agent-config/agent.yaml      
+    environment:
+      HOSTNAME: grafana-alloy-traces
+    ports:
+       - "4317:4317"
+       - "4318:4318"
+       - "9464:9464"
+       
+  grafana-alloy-metrics-logs:
+    image: grafana/alloy:v1.4.0
+    volumes:
+      - ./config/config-metrics-logs.alloy:/etc/agent/config.alloy
+      - ./logs/hello-observability.log:/tmp/hello-observability.log
+      - ./logs/ms-service-app-ms2.log:/tmp/ms-service-app-ms2.log
+      - ./logs/ms-service-app-ms2.log:/tmp/ms-service-app-ms1.log      
+    command:
+      - run
+      - /etc/agent/config.alloy
+      - --storage.path=/var/lib/alloy/data
+      - --server.http.listen-addr=0.0.0.0:12345
+ #     - -config.file=/etc/agent/config.river
+ #     - -config.file=/etc/agent-config/agent.yaml      
+    environment:
+      HOSTNAME: grafana-alloy-metrics
+   
+  # Our load generator
+  ubuntu-local:
+    image: ubuntu
+    restart: on-failure
+    command: ["sleep","infinity"]
+
+

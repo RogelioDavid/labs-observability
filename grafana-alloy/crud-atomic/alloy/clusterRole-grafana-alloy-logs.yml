@@ -1,0 +1,43 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: grafana-alloy-logs
+  namespace: monitoring
+rules:
+- apiGroups:
+  - ""
+  - "discovery.k8s.io"
+  - "networking.k8s.io"  
+  resources:
+  - nodes
+  - nodes/proxy
+  - nodes/metrics
+  - services
+  - endpoints
+  - pods
+  - events
+  - ingresses
+  - configmaps
+  - replicasets 
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+    - ""
+  resources:
+    - pods
+    - pods/log
+    - podlogs
+    - namespaces  
+  verbs:
+  - get
+  - list
+  - watch    
+- nonResourceURLs:
+  - /metrics
+  verbs:
+  - get
+  - list
+  - watch  
+---
