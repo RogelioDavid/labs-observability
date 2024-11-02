@@ -74,20 +74,44 @@ Por otro lado  mantiene los Mismo Pros / Cons del modo estatico, ademas maneja p
    -  
 ````
 
+# MANIFIESTOS PARA LA UTILIZACION DE OPEN-TELEMETRY
 
-## 5.1- instalar la declaracion de auto-instrumentacion hacia grafana-alloy
-
-````
-  - kubectl apply -f .\grafana-alloy\crud-atomic\otel-config-Instrumentation.yaml
-````
- 
-
-## 6.1- instalar los microservicios utilizados sin utilizacion de Sidecar de otel 
-````
-  -  kubectl apply -f .\minifiest\apps\replicaset-apps-auto.yml 
+## 5.1- instalar la opcion de auto-instrumentacion para enviarlo al alloy de trazas hacia grafana-alloy
 
 ````
-## 6.2- usando instalacion limpia sin nada  (Esta Opcion es para probar el limpio la recoleccion de alloy sin trazas)
+  - kubectl apply -f .\grafana-alloy\crud-atomic\otel\otel-config-auto-Instrumentation.yaml
+````
+
+## 5.2- instalar la opcion de collector en modo Sidecar de otel y utilizando la instrumentacion manual hacia al collector grafana-alloy de trazas
+
+````
+  - kubectl apply -f .\grafana-alloy\crud-atomic\otel\otel-config-sidecar.yaml
+````
+
+## 5.3- instalar la opcion de collector en modo Sidecar y auto-instrumentacion , solo para inyectar el agente pero en nivel de sidecar de enviar al collector alloy de trazas 
+
+````
+  - kubectl apply -f .\grafana-alloy\crud-atomic\otel\otel-config-sidecard-with-auto-instrumentacion.yml
+````
+
+# MANIFIESTOS PARA INSTANAR LA APLICACION
+
+## 6.1- Opcion de instalar los microservicios utilizados solo declarando la auto instrumentacion para enviarlo al alloy de trazas (paso 5.1)
+````
+  -  kubectl apply -f .\minifiest\apps\replicaset-apps-with-auto-Instrumentation.yml 
+
+````
+## 6.2- instalar los microservicios utilizamdp el Sidecar de otel y utilizando la instrumentacion manual (paso 5.2)
+````
+  -  kubectl apply -f .\minifiest\apps\replicaset-apps-with-sidecar-otel.yml 
+
+````
+## 6.3- instalar los microservicios utilizamdp el Sidecar de otel y utilizando la instrumentacion automatica (paso 5.3)
+````
+  -  kubectl apply -f .\minifiest\apps\replicaset-apps-auto-sidecar-otel.yml 
+
+````
+## 6.4- usando instalacion limpia sin nada  (Esta Opcion es para probar el limpio la recoleccion de alloy sin trazas) 
 ````
   - kubectl delete -f .\minifiest\apps\replicaset-apps.yml 
 

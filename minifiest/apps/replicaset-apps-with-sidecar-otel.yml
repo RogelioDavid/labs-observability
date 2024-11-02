@@ -15,10 +15,12 @@ spec:
     metadata:
       labels:
         app: hello-observability
+      annotations:
+        sidecar.opentelemetry.io/inject: "opentelemetry-collector/otel-collector"
     spec:
       containers:
         - name: app
-          image: rmendoza/hello-observability-simple
+          image: rmendoza/hello-observability-manual
           imagePullPolicy: Always
           ports:
           - name: out-http
@@ -66,10 +68,12 @@ spec:
     metadata:
       labels:
         app: ms-service-app-ms2
+      annotations:
+        sidecar.opentelemetry.io/inject: "opentelemetry-collector/otel-collector"
     spec:
       containers:
         - name: app
-          image: rmendoza/ms-service-app-ms2-simple
+          image: rmendoza/ms-service-app-ms2-manual
           imagePullPolicy: Always
           ports:
           - name: out-http
@@ -117,10 +121,12 @@ spec:
     metadata:
       labels:
         app: ms-service-app-ms1
+      annotations:
+        sidecar.opentelemetry.io/inject: "opentelemetry-collector/otel-collector"
     spec:
       containers:
         - name: app
-          image: rmendoza/ms-service-app-ms1-simple
+          image: rmendoza/ms-service-app-ms1-manual
           imagePullPolicy: Always
           ports:
           - name: out-http
