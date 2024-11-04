@@ -25,6 +25,13 @@ spec:
           ports:
           - name: out-http
             containerPort: 8080
+          env:
+          - name: OTEL_SERVICE_NAME
+            value: hello-observability
+          - name: OTEL_PROPAGATORS
+            value: tracecontext
+          - name: OTEL_TRACES_EXPORTER
+            value: otlp
           startupProbe:
             httpGet:
               path: /actuator/health/liveness
@@ -78,6 +85,13 @@ spec:
           ports:
           - name: out-http
             containerPort: 8082
+          env:
+          - name: OTEL_SERVICE_NAME
+            value: ms-service-app-ms2
+          - name: OTEL_PROPAGATORS
+            value: tracecontext
+          - name: OTEL_TRACES_EXPORTER
+            value: otlp
           startupProbe:
             httpGet:
               path: /actuator/health/liveness
@@ -131,6 +145,13 @@ spec:
           ports:
           - name: out-http
             containerPort: 8081
+          env:
+          - name: OTEL_SERVICE_NAME
+            value: ms-service-app-ms1
+          - name: OTEL_PROPAGATORS
+            value: tracecontext
+          - name: OTEL_TRACES_EXPORTER
+            value: otlp
           startupProbe:
             httpGet:
               path: /actuator/health/liveness

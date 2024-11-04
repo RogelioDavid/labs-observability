@@ -56,6 +56,9 @@ data:
     }
 
     prometheus.scrape "metrics_hello_observability_ms_service_app_ms1" {
+        clustering {
+            enabled = true
+        }
       targets         = discovery.relabel.metrics_hello_observability_ms_service_app_ms1.output
       forward_to      = [prometheus.relabel.metrics_hello_observability_ms_service_app_ms1.receiver]
       job_name        = "ms-service-app-ms1"
@@ -63,6 +66,9 @@ data:
     }
 
     prometheus.scrape "metrics_hello_observability_ms_service_app_ms2" {
+        clustering {
+            enabled = true
+        }    
       targets         = discovery.relabel.metrics_hello_observability_ms_service_app_ms2.output
       forward_to      = [prometheus.relabel.metrics_hello_observability_ms_service_app_ms2.receiver]
       job_name        = "ms-service-app-ms2"
@@ -70,6 +76,9 @@ data:
     }
 
     prometheus.scrape "metrics_hello_observability_hello_observability" {
+        clustering {
+            enabled = true
+        }    
       targets         = discovery.relabel.metrics_hello_observability_hello_observability.output
       forward_to      = [prometheus.relabel.metrics_hello_observability_hello_observability.receiver]
       job_name        = "hello-observability"
