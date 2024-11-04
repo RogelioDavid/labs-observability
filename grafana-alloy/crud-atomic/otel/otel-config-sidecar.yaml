@@ -1,0 +1,44 @@
+ apiVersion: opentelemetry.io/v1beta1
+ kind: OpenTelemetryCollector
+ metadata:
+   labels:
+     app: opentelemetry
+     component: collector
+   name: otel-collector
+   namespace: opentelemetry-collector
+ spec:
+   mode: sidecar
+   config: 
+     receivers:
+       otlp:
+         protocols:
+           grpc:
+             endpoint: 0.0.0.0:4317
+     exporters:
+       debug:
+        verbosity: basic
+        sampling_initial: 5
+        sampling_thereafter: 200       
+       otlp:
+         endpoint: http://lb-grafana-alloy-traces.monitoring.svc.cluster.local:4317
+         tls:
+           insecure: true
+     processors:
+       batch:
+         timeout: 200ms
+         send_batch_size: 512
+         send_batch_max_size: 11000
+       resource:
+         attributes:
+           # parse service name from K_SERVICE Cloud Run variable                                                                                                                                       
+         - key: service.name
+           value: k8s.pod.name
+           action: insert         
+     service:
+       pipelines:
+         traces:
+           receivers: [otlp]
+           processors: [batch,resource]
+           exporters: [otlp]             
+
+

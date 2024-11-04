@@ -46,7 +46,7 @@ Por otro lado  mantiene los Mismo Pros / Cons del modo estatico, ademas maneja p
 
 
 
-# PASOS PARA LEVANTA GRAFANA EN MODO FLOW
+# PASOS PARA LEVANTA GRAFANA ALLOY
 
 ## 1 - Crear Cluster
 ````
@@ -67,21 +67,37 @@ Por otro lado  mantiene los Mismo Pros / Cons del modo estatico, ademas maneja p
   - kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml
 ````
 
-## 4.- instalacion Grafana Agente modo Flow
+## 4.- instalacion Grafana Alloy
 
 ````
-   -  kubectl apply -f .\grafana-alloy\grafana-agent-alloy.yaml
+   -  kubectl apply -f .\grafana-alloy\crud\grafana-agent-alloy.yaml
    -  
 ````
 
 
-## 5.- instalar el collector en modo side card apuntando al grafana-agent
+## 5.1- instalar la declaracion de auto-instrumentacion hacia grafana-alloy
 
 ````
-  - kubectl apply -f .\grafana-alloy\otel-config-auto.yaml
+  - kubectl apply -f .\grafana-alloy\crud\otel-config-Instrumentation.yaml
+````
+## 5.2- instalar el collector en modo side card apuntando al grafana-agent
+
+````
+  - kubectl apply -f .\grafana-alloy\crud\otel-config-sidecar.yaml
 ````
 
-## 6.- instalar los microservicios utilizados sin utilizacion de Sidecar de otel 
+## 6.1- instalar los microservicios utilizados sin utilizacion de Sidecar de otel 
 ````
-  -  kubectl delete -f .\minifiest\apps\replicaset-apps-auto.yml 
+  -  kubectl apply -f .\minifiest\apps\replicaset-apps-auto.yml 
+
 ````
+## 6.2- usando instalacion limpia sin nada 
+````
+  - kubectl apply -f .\minifiest\apps\replicaset-apps.yml 
+
+````
+
+
+
+
+https://github.com/grafana/k8s-monitoring-helm/tree/main

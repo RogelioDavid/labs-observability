@@ -352,40 +352,23 @@ data:
       }
 
       output {
-        traces  = [otelcol.processor.transform.service_name.input]
-      }
-    }
-
-
-    otelcol.processor.transform "service_name" {
-      error_mode = "ignore"
-
-      trace_statements {
-        context = "resource"
-        statements = [
-          `set(attributes["service.name"], attributes["k8s.namespace.name"])`,
-          
-        ]
-      }
-      output {
-        traces  = [otelcol.processor.transform.service_name_span.input]
-      }
-    }
-
-    otelcol.processor.transform "service_name_span" {
-      error_mode = "ignore"
-
-      trace_statements {
-        context = "span"
-        statements = [
-          `set(attributes["service.name"], attributes["k8s.namespace.name"])`,
-        ]
-      }
-      output {
         traces  = [otelcol.processor.batch.processorbatch.input]
       }
     }
 
+
+    prometheus.exporter.self "self_metrics" {}
+
+    prometheus.scrape "scrape_self" {
+      targets    = prometheus.exporter.self.self_metrics.targets
+      forward_to = [otelcol.receiver.prometheus.prom_to_otlp.receiver]
+    }
+
+    otelcol.receiver.prometheus "prom_to_otlp" {
+      output {
+        metrics = [otelcol.processor.batch.processorbatch.input]
+      }
+    }
     otelcol.processor.batch "processorbatch" {
       timeout = "10s"
       send_batch_size = 10000
@@ -529,7 +512,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        image: grafana/alloy:latest
+        image: grafana/alloy:v1.4.0
         imagePullPolicy: IfNotPresent
         name: grafana-alloy
         ports:

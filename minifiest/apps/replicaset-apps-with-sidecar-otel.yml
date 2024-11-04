@@ -1,0 +1,244 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: hello-observability
+  namespace: "applications"  
+  labels:
+    app: hello-observability
+    tier: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-observability
+  template:
+    metadata:
+      labels:
+        app: hello-observability
+      annotations:
+        sidecar.opentelemetry.io/inject: "opentelemetry-collector/otel-collector"
+    spec:
+      containers:
+        - name: app
+          image: rmendoza/hello-observability-manual
+          imagePullPolicy: Always
+          ports:
+          - name: out-http
+            containerPort: 8080
+          env:
+          - name: OTEL_SERVICE_NAME
+            value: hello-observability
+          - name: OTEL_PROPAGATORS
+            value: tracecontext
+          - name: OTEL_TRACES_EXPORTER
+            value: otlp
+          startupProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            failureThreshold: 50
+            periodSeconds: 5
+            initialDelaySeconds: 40
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+---
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: ms-service-app-ms2
+  namespace: "applications"  
+  labels:
+    app: ms-service-app-ms2
+    tier: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-service-app-ms2
+  template:
+    metadata:
+      labels:
+        app: ms-service-app-ms2
+      annotations:
+        sidecar.opentelemetry.io/inject: "opentelemetry-collector/otel-collector"
+    spec:
+      containers:
+        - name: app
+          image: rmendoza/ms-service-app-ms2-manual
+          imagePullPolicy: Always
+          ports:
+          - name: out-http
+            containerPort: 8082
+          env:
+          - name: OTEL_SERVICE_NAME
+            value: ms-service-app-ms2
+          - name: OTEL_PROPAGATORS
+            value: tracecontext
+          - name: OTEL_TRACES_EXPORTER
+            value: otlp
+          startupProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8082
+            failureThreshold: 50
+            periodSeconds: 5
+            initialDelaySeconds: 40
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8082
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8082
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+---
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: ms-service-app-ms1
+  namespace: "applications"  
+  labels:
+    app: ms-service-app-ms1
+    tier: backend    
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-service-app-ms1
+  template:
+    metadata:
+      labels:
+        app: ms-service-app-ms1
+      annotations:
+        sidecar.opentelemetry.io/inject: "opentelemetry-collector/otel-collector"
+    spec:
+      containers:
+        - name: app
+          image: rmendoza/ms-service-app-ms1-manual
+          imagePullPolicy: Always
+          ports:
+          - name: out-http
+            containerPort: 8081
+          env:
+          - name: OTEL_SERVICE_NAME
+            value: ms-service-app-ms1
+          - name: OTEL_PROPAGATORS
+            value: tracecontext
+          - name: OTEL_TRACES_EXPORTER
+            value: otlp
+          startupProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8081
+            failureThreshold: 50
+            periodSeconds: 5
+            initialDelaySeconds: 40
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8081
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8081
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "ms-service-app-ms1"
+  namespace: "applications"
+  labels:
+    app: "ms-service-app-ms1"
+spec:
+  ports:
+  - protocol: "TCP"
+    port: 8081
+    targetPort: 8081
+  selector:
+    app: "ms-service-app-ms1"
+  type: "ClusterIP"               
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "hello-observability"
+  namespace: "applications"
+  labels:
+    app: "hello-observability"
+spec:
+  ports:
+  - protocol: "TCP"
+    port: 8080
+    targetPort: 8080
+  selector:
+    app: "hello-observability"
+  type: "ClusterIP"         
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "lb-hello-observability"
+  namespace: "applications"
+  labels:
+    app: "hello-observability"
+spec:
+  ports:
+  - protocol: "TCP"
+    port: 80
+    targetPort: 8080
+  selector:
+    app: "hello-observability"
+  type: "LoadBalancer"
+  loadBalancerIP: ""
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "ms-service-app-ms2"
+  namespace: "applications"
+  labels:
+    app: "ms-service-app-ms2"
+spec:
+  ports:
+  - protocol: "TCP"
+    port: 8082
+    targetPort: 8082
+  selector:
+    app: "ms-service-app-ms2"
+  type: "ClusterIP"     

@@ -1,0 +1,237 @@
+
+# Source: k8s-monitoring/charts/alloy/templates/cluster_service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-k8s-monitoring-alloy-cluster
+  labels:
+    helm.sh/chart: alloy-0.9.1
+    app.kubernetes.io/name: alloy
+    app.kubernetes.io/instance: grafana-k8s-monitoring
+    
+    app.kubernetes.io/version: "v1.4.2"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: alloy
+    app.kubernetes.io/component: networking
+spec:
+  type: ClusterIP
+  clusterIP: 'None'
+  publishNotReadyAddresses: true
+  selector:
+    app.kubernetes.io/name: alloy
+    app.kubernetes.io/instance: grafana-k8s-monitoring
+  ports:
+    # Do not include the -metrics suffix in the port name, otherwise metrics
+    # can be double-collected with the non-headless Service if it's also
+    # enabled.
+    #
+    # This service should only be used for clustering, and not metric
+    # collection.
+    - name: http
+      port: 12345
+      targetPort: 12345
+      protocol: "TCP"
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+      protocol: TCP
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+      protocol: TCP
+    - name: prometheus
+      port: 9999
+      targetPort: 9999
+      protocol: TCP
+    - name: jaeger-grpc
+      port: 14250
+      targetPort: 14250
+      protocol: TCP
+    - name: jaeger-binary
+      port: 6832
+      targetPort: 6832
+      protocol: TCP
+    - name: jaeger-compact
+      port: 6831
+      targetPort: 6831
+      protocol: TCP
+    - name: jaeger-http
+      port: 14268
+      targetPort: 14268
+      protocol: TCP
+    - name: zipkin
+      port: 9411
+      targetPort: 9411
+      protocol: TCP
+---
+# Source: k8s-monitoring/charts/alloy/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-k8s-monitoring-alloy
+  labels:
+    helm.sh/chart: alloy-0.9.1
+    app.kubernetes.io/name: alloy
+    app.kubernetes.io/instance: grafana-k8s-monitoring
+    
+    app.kubernetes.io/version: "v1.4.2"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: alloy
+    app.kubernetes.io/component: networking
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: alloy
+    app.kubernetes.io/instance: grafana-k8s-monitoring
+  internalTrafficPolicy: Cluster
+  ports:
+    - name: http-metrics
+      port: 12345
+      targetPort: 12345
+      protocol: "TCP"
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+      protocol: TCP
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+      protocol: TCP
+    - name: prometheus
+      port: 9999
+      targetPort: 9999
+      protocol: TCP
+    - name: jaeger-grpc
+      port: 14250
+      targetPort: 14250
+      protocol: TCP
+    - name: jaeger-binary
+      port: 6832
+      targetPort: 6832
+      protocol: TCP
+    - name: jaeger-compact
+      port: 6831
+      targetPort: 6831
+      protocol: TCP
+    - name: jaeger-http
+      port: 14268
+      targetPort: 14268
+      protocol: TCP
+    - name: zipkin
+      port: 9411
+      targetPort: 9411
+      protocol: TCP
+---
+# Source: k8s-monitoring/charts/kube-state-metrics/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-k8s-monitoring-kube-state-metrics
+  namespace: monitoring
+  labels:    
+    helm.sh/chart: kube-state-metrics-5.25.1
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: metrics
+    app.kubernetes.io/part-of: kube-state-metrics
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/instance: grafana-k8s-monitoring
+    app.kubernetes.io/version: "2.13.0"
+    release: grafana-k8s-monitoring
+  annotations:
+spec:
+  type: "ClusterIP"
+  ports:
+  - name: "http"
+    protocol: TCP
+    port: 8080
+    targetPort: 8080
+  
+  selector:    
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/instance: grafana-k8s-monitoring
+---
+# Source: k8s-monitoring/charts/prometheus-node-exporter/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-k8s-monitoring-prometheus-node-exporter
+  namespace: monitoring
+  labels:
+    helm.sh/chart: prometheus-node-exporter-4.39.0
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: metrics
+    app.kubernetes.io/part-of: prometheus-node-exporter
+    app.kubernetes.io/name: prometheus-node-exporter
+    app.kubernetes.io/instance: grafana-k8s-monitoring
+    app.kubernetes.io/version: "1.8.2"
+    release: grafana-k8s-monitoring
+  annotations:
+    prometheus.io/scrape: "true"
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9100
+      targetPort: 9100
+      protocol: TCP
+      name: metrics
+  selector:
+    app.kubernetes.io/name: prometheus-node-exporter
+    app.kubernetes.io/instance: grafana-k8s-monitoring
+---
+# Source: k8s-monitoring/templates/grafana-agent-receiver-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-k8s-monitoring-grafana-agent
+  labels:
+    helm.sh/chart: alloy-0.9.1
+    app.kubernetes.io/name: alloy
+    app.kubernetes.io/instance: grafana-k8s-monitoring
+    
+    app.kubernetes.io/version: "v1.4.2"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: alloy
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: alloy
+    app.kubernetes.io/instance: grafana-k8s-monitoring
+  internalTrafficPolicy: Cluster
+  ports:
+    - name: http-metrics
+      port: 12345
+      targetPort: 12345
+      protocol: "TCP"
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+      protocol: TCP
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+      protocol: TCP
+    - name: prometheus
+      port: 9999
+      targetPort: 9999
+      protocol: TCP
+    - name: jaeger-grpc
+      port: 14250
+      targetPort: 14250
+      protocol: TCP
+    - name: jaeger-binary
+      port: 6832
+      targetPort: 6832
+      protocol: TCP
+    - name: jaeger-compact
+      port: 6831
+      targetPort: 6831
+      protocol: TCP
+    - name: jaeger-http
+      port: 14268
+      targetPort: 14268
+      protocol: TCP
+    - name: zipkin
+      port: 9411
+      targetPort: 9411
+      protocol: TCP
+---

@@ -1,0 +1,122 @@
+
+# Source: k8s-monitoring/charts/opencost/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana-k8s-monitoring-opencost
+  namespace: monitoring
+  labels:
+    helm.sh/chart: opencost-1.42.0
+    app.kubernetes.io/name: opencost
+    app.kubernetes.io/instance: grafana-k8s-monitoring
+    app.kubernetes.io/version: "1.111.0"
+    app.kubernetes.io/part-of: opencost
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: opencost
+      app.kubernetes.io/instance: grafana-k8s-monitoring
+  strategy: 
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: opencost
+        app.kubernetes.io/instance: grafana-k8s-monitoring
+    spec:
+      serviceAccountName: grafana-k8s-monitoring-opencost
+      tolerations:
+        - effect: NoSchedule
+          key: kubernetes.io/arch
+          operator: Equal
+          value: arm64
+      nodeSelector:
+        kubernetes.io/os: linux
+      containers:
+        - name: grafana-k8s-monitoring-opencost
+          image: ghcr.io/opencost/opencost:1.111.0@sha256:6aa68e52a24b14ba41f23db08d1b9db1429a1c0300f4c0381ecc2c61fc311a97
+          imagePullPolicy: IfNotPresent
+          args:
+          ports:
+            - containerPort: 9003
+              name: http
+          resources:
+            limits:
+              cpu: 999m
+              memory: 1Gi
+            requests:
+              cpu: 10m
+              memory: 55Mi
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: 9003
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 9003
+            initialDelaySeconds: 10
+            periodSeconds: 20
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 9003
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - name: CUSTOM_COST_ENABLED
+              value: "false"
+            - name: KUBECOST_NAMESPACE
+              value: monitoring
+            - name: API_PORT
+              value: "9003"
+            - name: PROMETHEUS_SERVER_ENDPOINT
+              value: "https://prometheus-us-central1.grafana.net/api/prom"
+            - name: CLUSTER_ID
+              value: "autopilot-cluster-app"
+            - name: DB_BASIC_AUTH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: prometheus-k8s-monitoring
+                  key: username
+            - name: DB_BASIC_AUTH_PW
+              valueFrom:
+                secretKeyRef:
+                  name: prometheus-k8s-monitoring
+                  key: password
+            - name: DATA_RETENTION_DAILY_RESOLUTION_DAYS
+              value: "15"
+            - name: CLOUD_COST_ENABLED
+              value: "false"
+            - name: CLOUD_COST_MONTH_TO_DATE_INTERVAL
+              value: "6"
+            - name: CLOUD_COST_REFRESH_RATE_HOURS
+              value: "6"
+            - name: CLOUD_COST_QUERY_WINDOW_DAYS
+              value: "7"
+            - name: CLOUD_COST_RUN_WINDOW_DAYS
+              value: "3"
+            - name: EMIT_KSM_V1_METRICS
+              value: "false"
+            - name: EMIT_KSM_V1_METRICS_ONLY
+              value: "true"
+            # Add any additional provided variables
+            - name: CLOUD_PROVIDER_API_KEY
+              value: "AIzaSyD29bGxmHAVEOBYtgd8sYM2gM2ekfxQX4U"
+            - name: CURRENT_CLUSTER_ID_FILTER_ENABLED
+              value: "true"
+            - name: PROM_CLUSTER_ID_LABEL
+              value: "cluster"
+---
