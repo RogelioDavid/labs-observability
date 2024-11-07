@@ -63,7 +63,7 @@ services:
 #    command: /bin/sh -c "/tmp/load-generator.sh"
   
   agent-operator:
-    image: grafana/agent:v0.33.2
+    image: grafana/agent:v0.43.2
     volumes:
       - ./config/agent/agent.yaml:/etc/agent-config/agent.yaml
       # - /:/host/root:ro,rslave
@@ -81,7 +81,7 @@ services:
       HOSTNAME: agent-operator
 
   agent-loki:
-    image: grafana/agent:v0.33.2
+    image: grafana/agent:v0.43.2
     volumes:
       - ./config/logs/agent.yaml:/etc/agent-config/agent.yaml
       - ./logs/hello-observability.log:/tmp/hello-observability.log

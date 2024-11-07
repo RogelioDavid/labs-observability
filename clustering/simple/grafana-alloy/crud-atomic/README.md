@@ -70,7 +70,7 @@ Por otro lado  mantiene los Mismo Pros / Cons del modo estatico, ademas maneja p
 ## 4.- instalacion Grafana Alloy
 
 ````
-   -  kubectl apply -f .\grafana-alloy\crud-atomic\alloy\
+   -  kubectl apply -f .\clustering\simple\grafana-alloy\crud-atomic\alloy\
    -  
 ````
 
@@ -79,19 +79,19 @@ Por otro lado  mantiene los Mismo Pros / Cons del modo estatico, ademas maneja p
 ## 5.1- instalar la opcion de auto-instrumentacion para enviarlo al alloy de trazas hacia grafana-alloy
 
 ````
-  - kubectl apply -f .\grafana-alloy\crud-atomic\otel\otel-config-auto-Instrumentation.yaml
+  - kubectl apply -f .\clustering\simple\grafana-alloy\crud-atomic\otel\otel-config-auto-Instrumentation.yaml
 ````
 
 ## 5.2- instalar la opcion de collector en modo Sidecar de otel y utilizando la instrumentacion manual hacia al collector grafana-alloy de trazas
 
 ````
-  - kubectl apply -f .\grafana-alloy\crud-atomic\otel\otel-config-sidecar.yaml
+  - kubectl apply -f .\clustering\simple\grafana-alloy\crud-atomic\otel\otel-config-sidecar.yaml
 ````
 
 ## 5.3- instalar la opcion de collector en modo Sidecar y auto-instrumentacion , solo para inyectar el agente pero en nivel de sidecar de enviar al collector alloy de trazas 
 
 ````
-  - kubectl apply -f .\grafana-alloy\crud-atomic\otel\otel-config-sidecard-with-auto-instrumentacion.yml
+  - kubectl apply -f .\clustering\simple\grafana-alloy\crud-atomic\otel\otel-config-sidecard-with-auto-instrumentacion.yml
 ````
 
 # MANIFIESTOS PARA INSTANAR LA APLICACION
@@ -116,8 +116,4 @@ Por otro lado  mantiene los Mismo Pros / Cons del modo estatico, ademas maneja p
   - kubectl delete -f .\minifiest\apps\replicaset-apps.yml 
 
 ```` 
-
-
-
-
-https://github.com/grafana/k8s-monitoring-helm/tree/main
+ 

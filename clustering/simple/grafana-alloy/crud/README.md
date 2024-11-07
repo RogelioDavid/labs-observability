@@ -70,7 +70,7 @@ Por otro lado  mantiene los Mismo Pros / Cons del modo estatico, ademas maneja p
 ## 4.- instalacion Grafana Alloy
 
 ````
-   -  kubectl apply -f .\grafana-alloy\crud\grafana-agent-alloy.yaml
+   -  kubectl apply -f .\clustering\simple\grafana-alloy\crud\grafana-agent-alloy.yaml
    -  
 ````
 
@@ -78,12 +78,12 @@ Por otro lado  mantiene los Mismo Pros / Cons del modo estatico, ademas maneja p
 ## 5.1- instalar la declaracion de auto-instrumentacion hacia grafana-alloy
 
 ````
-  - kubectl apply -f .\grafana-alloy\crud\otel-config-Instrumentation.yaml
+  - kubectl apply -f .\clustering\simple\grafana-alloy\crud\otel-config-Instrumentation.yaml
 ````
 ## 5.2- instalar el collector en modo side card apuntando al grafana-agent
 
 ````
-  - kubectl apply -f .\grafana-alloy\crud\otel-config-sidecar.yaml
+  - kubectl apply -f .\clustering\simple\grafana-alloy\crud\otel-config-sidecar.yaml
 ````
 
 ## 6.1- instalar los microservicios utilizados sin utilizacion de Sidecar de otel 
@@ -96,8 +96,3 @@ Por otro lado  mantiene los Mismo Pros / Cons del modo estatico, ademas maneja p
   - kubectl apply -f .\minifiest\apps\replicaset-apps.yml 
 
 ````
-
-
-
-
-https://github.com/grafana/k8s-monitoring-helm/tree/main

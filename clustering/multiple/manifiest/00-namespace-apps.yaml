@@ -1,0 +1,13 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: applications
+  labels:
+    istio-injection: enabled
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: opentelemetry-collector
+  labels:
+    istio-injection: disabled        

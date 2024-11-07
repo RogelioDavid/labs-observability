@@ -76,6 +76,9 @@ create-cluster-simple-anthos:
 create-auto-cluster-simple:
 	gcloud beta container --project "sparta-proyect-host" clusters create-auto "autopilot-cluster-app" --region "us-central1" --release-channel "regular" --network "projects/sparta-proyect-host/global/networks/principal-vpc" --subnetwork "projects/sparta-proyect-host/regions/us-central1/subnetworks/principal-vpc" --cluster-ipv4-cidr "/17" --binauthz-evaluation-mode=DISABLED --fleet-project=sparta-proyect-host
 
+create-auto-cluster-simple-obs:
+	gcloud beta container --project "sparta-proyect-host" clusters create-auto "autopilot-cluster-obs" --region "us-central1" --release-channel "regular" --network "projects/sparta-proyect-host/global/networks/principal-vpc" --subnetwork "projects/sparta-proyect-host/regions/us-central1/subnetworks/principal-vpc" --cluster-ipv4-cidr "/17" --binauthz-evaluation-mode=DISABLED --fleet-project=sparta-proyect-host
+
 create-auto-cluster-anthos:
 	gcloud beta container --project "sparta-proyect-host" clusters create-auto "autopilot-cluster-app" --region "us-central1" --release-channel "regular" --network "projects/sparta-proyect-host/global/networks/principal-vpc" --subnetwork "projects/sparta-proyect-host/regions/us-central1/subnetworks/principal-vpc" --cluster-ipv4-cidr "/17" --binauthz-evaluation-mode=DISABLED --scopes=https://www.googleapis.com/auth/cloud-platform --fleet-project=sparta-proyect-host
 

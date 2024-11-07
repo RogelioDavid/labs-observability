@@ -7,18 +7,16 @@
   APLICACIONES
 
   - make create-cluster-simple 
-  -  gcloud container clusters get-credentials autopilot-cluster-app --zone=us-central1-a --project sparta-proyect-host 
- 
+  -  gcloud container clusters get-credentials autopilot-cluster-app --zone=us-central1-a  --project sparta-proyect-host
+  - kubectl apply -f .\clustering\multiple\manifiest\00-namespace-apps.yaml
+
  OBSERVABILIDAD
 
   - make create-cluster-simple-obs 
-  -  gcloud container clusters get-credentials autopilot-cluster-obs --zone=us-central1-a --project sparta-proyect-host 
- 
+  -  gcloud container clusters get-credentials autopilot-cluster-obs --zone=us-central1-a  --project sparta-proyect-host
+  - kubectl apply -f .\clustering\multiple\manifiest\00-namespace-obs.yaml
 ```` 
-````
-USO DE LOS MISMO NAMESPACE EN AMBOS CLUSTER (DESPUES SE DEBE USAR CADA NAMESAPCE EN CADA LUGAR)
-   - kubectl apply -f .\minifiest\cluster\00-namespace.yaml
-````
+ 
 
 
 # PREPARACION DE PLATAFORMA OBSERVABLIDAD
@@ -27,7 +25,7 @@ USO DE LOS MISMO NAMESPACE EN AMBOS CLUSTER (DESPUES SE DEBE USAR CADA NAMESAPCE
 ##  instalacion Grafana Alloy
 
 ````
-   -  kubectl apply -f .\grafana-alloy\crud-atomic\alloy\
+   -  kubectl apply -f .\clustering\multiple\grafana-alloy\alloy\
    -  
 ````
 
@@ -48,40 +46,40 @@ USO DE LOS MISMO NAMESPACE EN AMBOS CLUSTER (DESPUES SE DEBE USAR CADA NAMESAPCE
 ## 5.1- instalar la opcion de auto-instrumentacion para enviarlo al alloy de trazas hacia grafana-alloy (poner la ip en el lb)
 
 ````
-  - kubectl apply -f .\grafana-alloy\crud-atomic\otel\otel-config-auto-Instrumentation.yaml
+  - kubectl apply -f .\clustering\multiple\grafana-alloy\otel\otel-config-auto-Instrumentation.yaml
 ````
 
 ## 5.2- instalar la opcion de collector en modo Sidecar de otel y utilizando la instrumentacion manual hacia al collector grafana-alloy de trazas (poner la ip en el lb)
 
 ````
-  - kubectl apply -f .\grafana-alloy\crud-atomic\otel\otel-config-sidecar.yaml
+  - kubectl apply -f .\clustering\multiple\grafana-alloy\otel\otel-config-sidecar.yaml
 ````
 
 ## 5.3- instalar la opcion de collector en modo Sidecar y auto-instrumentacion , solo para inyectar el agente pero en nivel de sidecar de enviar al collector alloy de trazas (poner la ip en el lb) 
 
 ````
-  - kubectl apply -f .\grafana-alloy\crud-atomic\otel\otel-config-sidecard-with-auto-instrumentacion.yml
+  - kubectl apply -f .\clustering\multiple\grafana-alloy\otel\otel-config-sidecard-with-auto-instrumentacion.yml
 ````
 
 # MANIFIESTOS PARA INSTANAR LA APLICACION
 
 ## 6.1- Opcion de instalar los microservicios utilizados solo declarando la auto instrumentacion para enviarlo al alloy de trazas (paso 5.1)
 ````
-  -  kubectl apply -f .\minifiest\apps\replicaset-apps-with-auto-Instrumentation.yml 
+  -  kubectl apply -f .\clustering\multiple\apps\replicaset-apps-with-auto-Instrumentation.yml 
 
 ````
 ## 6.2- instalar los microservicios utilizamdp el Sidecar de otel y utilizando la instrumentacion manual (paso 5.2)
 ````
-  -  kubectl apply -f .\minifiest\apps\replicaset-apps-with-sidecar-otel.yml 
+  -  kubectl apply -f .\clustering\multiple\apps\replicaset-apps-with-sidecar-otel.yml 
 
 ````
 ## 6.3- instalar los microservicios utilizamdp el Sidecar de otel y utilizando la instrumentacion automatica (paso 5.3)
 ````
-  -  kubectl apply -f .\minifiest\apps\replicaset-apps-auto-sidecar-otel.yml 
+  -  kubectl apply -f .\clustering\multiple\apps\replicaset-apps-auto-sidecar-otel.yml 
 
 ````
 ## 6.4- usando instalacion limpia sin nada  (Esta Opcion es para probar el limpio la recoleccion de alloy sin trazas) 
 ````
-  - kubectl delete -f .\minifiest\apps\replicaset-apps.yml 
+  - kubectl delete -f .\clustering\multiple\apps\replicaset-apps.yml 
 
 ```` 
