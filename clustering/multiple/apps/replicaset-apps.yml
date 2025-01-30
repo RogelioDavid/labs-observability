@@ -182,23 +182,23 @@ spec:
   selector:
     app: "hello-observability"
   type: "ClusterIP"         
----
-apiVersion: "v1"
-kind: "Service"
-metadata:
-  name: "lb-hello-observability"
-  namespace: "applications"
-  labels:
-    app: "hello-observability"
-spec:
-  ports:
-  - protocol: "TCP"
-    port: 80
-    targetPort: 8080
-  selector:
-    app: "hello-observability"
-  type: "LoadBalancer"
-  loadBalancerIP: ""
+# ---
+# apiVersion: "v1"
+# kind: "Service"
+# metadata:
+#   name: "lb-hello-observability"
+#   namespace: "applications"
+#   labels:
+#     app: "hello-observability"
+# spec:
+#   ports:
+#   - protocol: "TCP"
+#     port: 80
+#     targetPort: 8080
+#   selector:
+#     app: "hello-observability"
+#   type: "LoadBalancer"
+#   loadBalancerIP: ""
 ---
 apiVersion: "v1"
 kind: "Service"
@@ -215,3 +215,71 @@ spec:
   selector:
     app: "ms-service-app-ms2"
   type: "ClusterIP"     
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "hello-observability-nodeport"
+  namespace: "applications"
+  labels:
+    app: "hello-observability"
+spec:
+  ports:
+  - protocol: "TCP"
+    port: 8080
+    targetPort: 8080
+  selector:
+    app: "hello-observability"
+  type: "NodePort"
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "ms-service-app-ms1-nodeport"
+  namespace: "applications"
+  labels:
+    app: "ms-service-app-ms1"
+spec:
+  ports:
+  - protocol: "TCP"
+    port: 8081
+    targetPort: 8081
+  selector:
+    app: "ms-service-app-ms1"
+  type: "NodePort"
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "ms-service-app-ms2-nodeport"
+  namespace: "applications"
+  labels:
+    app: "ms-service-app-ms2"
+spec:
+  ports:
+  - protocol: "TCP"
+    port: 8082
+    targetPort: 8082
+  selector:
+    app: "ms-service-app-ms2"
+  type: "NodePort"    
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: observability-ingress
+  namespace: applications
+spec:
+  rules:
+  - host: hello-observability.com
+    http:
+      paths:
+      - backend:
+          serviceName: hello-observability-nodeport
+          servicePort: 8080
+  - host:  ms-service-app-ms1.com
+    http:
+      paths:
+      - backend:
+          serviceName: ms-service-app-ms1-nodeport
+          servicePort: 8081

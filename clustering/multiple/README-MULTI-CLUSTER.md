@@ -80,6 +80,6 @@
 ````
 ## 6.4- usando instalacion limpia sin nada  (Esta Opcion es para probar el limpio la recoleccion de alloy sin trazas) 
 ````
-  - kubectl delete -f .\clustering\multiple\apps\replicaset-apps.yml 
+  - kubectl apply -f .\clustering\multiple\apps\replicaset-apps.yml 
 
 ```` 

@@ -1,0 +1,98 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+extensions:
+  basicauth/tempo:
+    client_auth:
+      username: "406010"
+      password: "eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0="
+  basicauth/promp:
+    client_auth:
+      username: "821057"
+      password: "eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0="
+
+
+connectors:
+  spanmetrics:
+    namespace: traces.spanmetrics
+    exemplars:
+      enabled: true  
+  servicegraph:
+    latency_histogram_buckets: [50ms, 100ms, 250ms, 500ms, 1s, 2s, 5s, 10s, 20s]
+    dimensions:
+      - http.method
+      - http.target 
+    store:
+      ttl: 1s
+      max_items: 10  
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+  prometheus:
+    trim_metric_suffixes: true
+    config:
+      scrape_configs:
+      - job_name: otel-collector
+        scrape_interval: 30s
+        static_configs:
+        - targets: ['localhost:8888']
+
+
+exporters:
+  prometheusremotewrite:
+    endpoint: https://prometheus-us-central1.grafana.net/api/prom/push
+    tls:
+      insecure: true
+    auth:
+      authenticator: basicauth/promp
+  prometheus/servicegraph:
+    endpoint: tempo-us-central1.grafana.net:443
+    auth:
+      authenticator: basicauth/tempo
+    namespace: servicegraph
+  logging:
+    loglevel: debug
+  debug:  
+  otlp:
+    endpoint: tempo-us-central1.grafana.net:443
+    auth:
+      authenticator: basicauth/tempo
+
+
+
+processors:
+  batch:
+    timeout: 200ms
+    send_batch_size: 512
+    send_batch_max_size: 11000
+
+
+
+service:
+  extensions: [ basicauth/tempo, basicauth/promp ]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp, debug, spanmetrics, servicegraph]
+    metrics:
+      receivers: [otlp, spanmetrics, servicegraph, prometheus]
+      processors: [batch]
+      exporters: [debug, prometheusremotewrite]
+    metrics/servicegraph:
+      receivers: [servicegraph]
+      exporters: [debug]      
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug]
+
+# exporters:
+#   debug:
+#   otlp:
+#     endpoint: tempo-us-central1.grafana.net:443
+#     headers:
+#       authorization: Basic eyJrIjoiODZiM2I1Yzk2NzI1MzY5ODgyMWZjZGM4ZjgxOWMxOTg5ZmY4NWRhOCIsIm4iOiJvdGVsLWNvbGxlY3RvciIsImlkIjo4MTQzMjJ9
