@@ -63,7 +63,7 @@ Por otro lado  mantiene los Mismo Pros / Cons del modo estatico, ademas maneja p
 ## 3.- instalar los Custom Resource para soportar Open Telemetry Collector
 
 ````
-  - kubectl apply  -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.4/cert-manager.yaml
+  - kubectl apply  -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.5/cert-manager.yaml
   - kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml
 ````
 
@@ -96,11 +96,16 @@ Por otro lado  mantiene los Mismo Pros / Cons del modo estatico, ademas maneja p
 
 # MANIFIESTOS PARA INSTANAR LA APLICACION
 
-## 6.1- Opcion de instalar los microservicios utilizados solo declarando la auto instrumentacion para enviarlo al alloy de trazas (paso 5.1)
+## 6.1- Opcion de instalar los microservicios utilizados solo declarando la auto instrumentacion para enviarlo al alloy de trazas (paso 5.1) y ejecutando la anotacion a nivel de namespace
 ````
-  -  kubectl apply -f .\minifiest\apps\replicaset-apps-with-auto-Instrumentation.yml 
+  - kubectl apply -f .\minifiest\apps\replicaset-apps-with-auto-Instrumentation.yml 
+  - make kubectl-add-annotations-auto-instrumentation
 
 ````
+
+
+
+
 ## 6.2- instalar los microservicios utilizamdp el Sidecar de otel y utilizando la instrumentacion manual (paso 5.2)
 ````
   -  kubectl apply -f .\minifiest\apps\replicaset-apps-with-sidecar-otel.yml 

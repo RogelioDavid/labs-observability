@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: ReplicaSet
 metadata:
-  name: hms-hello-observability-services
+  name: ms-hello-observability-services
   namespace: "applications"  
   labels:
     app: ms-hello-observability-services
@@ -15,9 +15,9 @@ spec:
     metadata:
       labels:
         app: ms-hello-observability-services
-      annotations:
-        instrumentation.opentelemetry.io/inject-java: "opentelemetry-collector/auto-instrumentation"
-        instrumentation.opentelemetry.io/container-names: "app"             
+#      annotations:
+#        instrumentation.opentelemetry.io/inject-java: "opentelemetry-collector/auto-instrumentation"
+#        instrumentation.opentelemetry.io/container-names: "app"             
     spec:
       containers:
         - name: app
@@ -69,9 +69,9 @@ spec:
     metadata:
       labels:
         app: ms-service-app-ms2
-      annotations:
-        instrumentation.opentelemetry.io/inject-java: "opentelemetry-collector/auto-instrumentation"
-        instrumentation.opentelemetry.io/container-names: "app"             
+#      annotations:
+#        instrumentation.opentelemetry.io/inject-java: "opentelemetry-collector/auto-instrumentation"
+#        instrumentation.opentelemetry.io/container-names: "app"             
     spec:
       containers:
         - name: app
@@ -123,9 +123,9 @@ spec:
     metadata:
       labels:
         app: ms-service-app-ms1
-      annotations:
-        instrumentation.opentelemetry.io/inject-java: "opentelemetry-collector/auto-instrumentation"
-        instrumentation.opentelemetry.io/container-names: "app"             
+#      annotations:
+#        instrumentation.opentelemetry.io/inject-java: "opentelemetry-collector/auto-instrumentation"
+#        instrumentation.opentelemetry.io/container-names: "app"             
 
     spec:
       containers:
