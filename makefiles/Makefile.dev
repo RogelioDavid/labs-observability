@@ -89,6 +89,6 @@ install-kube-state-metrics:
 install-prometheus-node-exporter:
 	helm repo add prometheus-community https://prometheus-community.github.io/helm-charts && helm repo update && helm install nodeexporter prometheus-community/prometheus-node-exporter -n "monitoring"
 
-kubectl-add-annotations-auto-instrumentation
+kubectl-add-annotations-java-auto-instrumentation
     kubectl annotate namespace applications instrumentation.opentelemetry.io/inject-java=opentelemetry-collector/auto-instrumentation instrumentation.opentelemetry.io/container-names=app
 	
