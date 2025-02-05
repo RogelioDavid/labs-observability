@@ -4,8 +4,12 @@ metadata:
   name: auto-instrumentation
   namespace: opentelemetry-collector
 spec:
+  propagators:
+    - tracecontext
+    - baggage
+    - b3
   sampler:
-    argument: '1'
+    argument: '0.1'
     type: parentbased_traceidratio
   java:
     image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-java:1.33.5

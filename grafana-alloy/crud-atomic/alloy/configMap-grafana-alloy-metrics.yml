@@ -9,6 +9,86 @@ data:
         level  = "debug"
         format = "json"
     }
+    discovery.kubernetes "nodes" {
+      role = "node"
+    }
+    discovery.kubernetes "services" {
+      role = "service"
+    }
+    discovery.kubernetes "endpoints" {
+      role = "endpoints"
+    }
+    discovery.kubernetes "pods" {
+      role = "pod"
+    }
+
+    // Another way to monitor the Alloy Agent
+    discovery.relabel "alloy_kubernetes_data" {
+      targets = discovery.kubernetes.pods.targets
+      rule {
+        source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+        regex = "alloy-logs.*"
+        action = "keep"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_pod_container_port_name"]
+        regex = "http-metrics"
+        action = "keep"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_namespace"]
+        target_label  = "namespace"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_service_name"]
+        target_label  = "service_name"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_pod_name"]
+        target_label  = "pod"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_pod_name"]
+        target_label  = "instance"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_pod_container_name"]
+        target_label  = "container"
+      }
+    }
+    prometheus.scrape "alloy_kubernetes_data" {
+      job_name = "integrations/alloy"
+      targets = discovery.relabel.alloy_kubernetes_data.output
+      scrape_interval = "60s"
+      forward_to = [prometheus.relabel.alloy.receiver]
+    }
+    prometheus.relabel "alloy" {
+      rule {
+        source_labels = ["__name__"]
+        regex = "alloy_build_info|alloy_build_info|alloy_component_controller_running_components|alloy_component_dependencies_wait_seconds|alloy_component_dependencies_wait_seconds_bucket|alloy_component_evaluation_seconds|alloy_component_evaluation_seconds_bucket|alloy_component_evaluation_seconds_count|alloy_component_evaluation_seconds_sum|alloy_component_evaluation_slow_seconds|alloy_config_hash|alloy_resources_machine_rx_bytes_total|alloy_resources_machine_tx_bytes_total|alloy_resources_process_cpu_seconds_total|alloy_resources_process_resident_memory_bytes|alloy_tcp_connections|alloy_wal_samples_appended_total|alloy_wal_storage_active_series|cluster_node_gossip_health_score|cluster_node_gossip_proto_version|cluster_node_gossip_received_events_total|cluster_node_info|cluster_node_lamport_time|cluster_node_peers|cluster_node_update_observers|cluster_transport_rx_bytes_total|cluster_transport_rx_packet_queue_length|cluster_transport_rx_packets_failed_total|cluster_transport_rx_packets_total|cluster_transport_stream_rx_bytes_total|cluster_transport_stream_rx_packets_failed_total|cluster_transport_stream_rx_packets_total|cluster_transport_stream_tx_bytes_total|cluster_transport_stream_tx_packets_failed_total|cluster_transport_stream_tx_packets_total|cluster_transport_streams|cluster_transport_tx_bytes_total|cluster_transport_tx_packet_queue_length|cluster_transport_tx_packets_failed_total|cluster_transport_tx_packets_total|exporter_send_failed_spans_ratio_total|exporter_sent_spans_ratio_total|go_gc_duration_seconds_count|go_goroutines|go_memstats_heap_inuse_bytes|loki_process_dropped_lines_total|loki_write_batch_retries_total|loki_write_dropped_bytes_total|loki_write_dropped_entries_total|loki_write_encoded_bytes_total|loki_write_mutated_bytes_total|loki_write_mutated_entries_total|loki_write_request_duration_seconds_bucket|loki_write_sent_bytes_total|loki_write_sent_entries_total|otelcol_exporter_send_failed_spans_total|otelcol_exporter_sent_spans_total|otelcol_processor_batch_batch_send_size_bucket|otelcol_processor_batch_metadata_cardinality|otelcol_processor_batch_timeout_trigger_send_total|otelcol_receiver_accepted_spans_total|otelcol_receiver_refused_spans_total|process_cpu_seconds_total|process_start_time_seconds|processor_batch_batch_send_size_ratio_bucket|processor_batch_metadata_cardinality_ratio|processor_batch_timeout_trigger_send_ratio_total|prometheus_remote_storage_bytes_total|prometheus_remote_storage_enqueue_retries_total|prometheus_remote_storage_highest_timestamp_in_seconds|prometheus_remote_storage_metadata_bytes_total|prometheus_remote_storage_queue_highest_sent_timestamp_seconds|prometheus_remote_storage_samples_dropped_total|prometheus_remote_storage_samples_failed_total|prometheus_remote_storage_samples_pending|prometheus_remote_storage_samples_retried_total|prometheus_remote_storage_samples_total|prometheus_remote_storage_sent_batch_duration_seconds_bucket|prometheus_remote_storage_sent_batch_duration_seconds_count|prometheus_remote_storage_sent_batch_duration_seconds_sum|prometheus_remote_storage_shard_capacity|prometheus_remote_storage_shards|prometheus_remote_storage_shards_desired|prometheus_remote_storage_shards_max|prometheus_remote_storage_shards_min|prometheus_remote_storage_succeeded_samples_total|prometheus_remote_write_wal_samples_appended_total|prometheus_remote_write_wal_storage_active_series|prometheus_sd_discovered_targets|prometheus_target_interval_length_seconds_count|prometheus_target_interval_length_seconds_sum|prometheus_target_scrapes_exceeded_sample_limit_total|prometheus_target_scrapes_sample_duplicate_timestamp_total|prometheus_target_scrapes_sample_out_of_bounds_total|prometheus_target_scrapes_sample_out_of_order_total|prometheus_target_sync_length_seconds_sum|prometheus_wal_watcher_current_segment|receiver_accepted_spans_ratio_total|receiver_refused_spans_ratio_total|rpc_server_duration_milliseconds_bucket|scrape_duration_seconds|traces_exporter_send_failed_spans|traces_exporter_send_failed_spans_total|traces_exporter_sent_spans|traces_exporter_sent_spans_total|traces_loadbalancer_backend_outcome|traces_loadbalancer_num_backends|traces_receiver_accepted_spans|traces_receiver_accepted_spans_total|traces_receiver_refused_spans|traces_receiver_refused_spans_total|up"
+        action = "keep"
+      }
+      forward_to = [prometheus.remote_write.metrics_hello_observability.receiver]
+    }
+
+
+    // Grafana Alloy
+    // Alloy Health Metrics Integration
+    prometheus.exporter.self "integrations_alloy_health" { }
+    discovery.relabel "alloy" {
+      targets = prometheus.exporter.self.integrations_alloy_health.targets
+      rule {
+        replacement  = "integrations/alloy"
+        target_label = "job"
+      }
+    }
+    prometheus.scrape "alloy" {
+      job_name = "integrations/alloy"
+      targets = discovery.relabel.alloy.output
+      scrape_interval = "60s"
+      forward_to = [prometheus.relabel.alloy.receiver]
+    }
+
 
     // Prometheus configs
     prometheus.remote_write "metrics_hello_observability" {
@@ -16,13 +96,31 @@ data:
         monitor = "hello-observability",
         cluster = "autopilot-cluster-app",
       }
+      wal {
+        truncate_frequency = "2h"
+        min_keepalive_time = "5m"
+        max_keepalive_time = "8h"
+      }
       endpoint {
         name = "hello-observability-6397c4"
-      url  = "https://prometheus-us-central1.grafana.net/api/prom/push"
-      basic_auth {
-        username = "821057"
-        password = "eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0="
+        url  = "https://prometheus-us-central1.grafana.net/api/prom/push"
+        basic_auth {
+          username = "821057"
+          password = "eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0="
+        }
+      send_native_histograms = false
+      queue_config {
+        capacity = 10000
+        min_shards = 1
+        max_shards = 50
+        max_samples_per_send = 2000
+        batch_send_deadline = "5s"
+        min_backoff = "30ms"
+        max_backoff = "5s"
+        retry_on_http_429 = true
+        sample_age_limit = "0s"
       }
+
       }
     }
     discovery.relabel "metrics_hello_observability_ms_service_app_ms1" {
@@ -47,7 +145,7 @@ data:
 
     discovery.relabel "metrics_hello_observability_hello_observability" {
       targets = [{
-        __address__ = "hello-observability.applications.svc.cluster.local:8080",
+        __address__ = "ms-hello-observability-services.applications.svc.cluster.local:8080",
       }]
       rule {
         source_labels = ["trace_id"]
