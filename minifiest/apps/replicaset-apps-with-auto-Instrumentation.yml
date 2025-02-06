@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: ReplicaSet
 metadata:
-  name: hello-observability
+  name: ms-hello-observability-services
   namespace: "applications"  
   labels:
-    app: hello-observability
+    app: ms-hello-observability-services
     tier: backend
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: hello-observability
+      app: ms-hello-observability-services
   template:
     metadata:
       labels:
-        app: hello-observability
-      annotations:
-        instrumentation.opentelemetry.io/inject-java: "opentelemetry-collector/auto-instrumentation"
-        instrumentation.opentelemetry.io/container-names: "app"             
+        app: ms-hello-observability-services
+#      annotations:
+#        instrumentation.opentelemetry.io/inject-java: "opentelemetry-collector/auto-instrumentation"
+#        instrumentation.opentelemetry.io/container-names: "app"             
     spec:
       containers:
         - name: app
@@ -69,9 +69,9 @@ spec:
     metadata:
       labels:
         app: ms-service-app-ms2
-      annotations:
-        instrumentation.opentelemetry.io/inject-java: "opentelemetry-collector/auto-instrumentation"
-        instrumentation.opentelemetry.io/container-names: "app"             
+#      annotations:
+#        instrumentation.opentelemetry.io/inject-java: "opentelemetry-collector/auto-instrumentation"
+#        instrumentation.opentelemetry.io/container-names: "app"             
     spec:
       containers:
         - name: app
@@ -123,9 +123,9 @@ spec:
     metadata:
       labels:
         app: ms-service-app-ms1
-      annotations:
-        instrumentation.opentelemetry.io/inject-java: "opentelemetry-collector/auto-instrumentation"
-        instrumentation.opentelemetry.io/container-names: "app"             
+#      annotations:
+#        instrumentation.opentelemetry.io/inject-java: "opentelemetry-collector/auto-instrumentation"
+#        instrumentation.opentelemetry.io/container-names: "app"             
 
     spec:
       containers:
@@ -164,49 +164,33 @@ spec:
 apiVersion: "v1"
 kind: "Service"
 metadata:
-  name: "ms-service-app-ms1"
+  name: "ms-hello-observability-services"
   namespace: "applications"
   labels:
-    app: "ms-service-app-ms1"
-spec:
-  ports:
-  - protocol: "TCP"
-    port: 8081
-    targetPort: 8081
-  selector:
-    app: "ms-service-app-ms1"
-  type: "ClusterIP"               
----
-apiVersion: "v1"
-kind: "Service"
-metadata:
-  name: "hello-observability"
-  namespace: "applications"
-  labels:
-    app: "hello-observability"
+    app: "ms-hello-observability-services"
 spec:
   ports:
   - protocol: "TCP"
     port: 8080
     targetPort: 8080
   selector:
-    app: "hello-observability"
+    app: "ms-hello-observability-services"
   type: "ClusterIP"         
 ---
 apiVersion: "v1"
 kind: "Service"
 metadata:
-  name: "lb-hello-observability"
+  name: "lb-ms-hello-observability-services"
   namespace: "applications"
   labels:
-    app: "hello-observability"
+    app: "ms-hello-observability-services"
 spec:
   ports:
   - protocol: "TCP"
     port: 80
     targetPort: 8080
   selector:
-    app: "hello-observability"
+    app: "ms-hello-observability-services"
   type: "LoadBalancer"
   loadBalancerIP: ""
 ---
@@ -225,3 +209,19 @@ spec:
   selector:
     app: "ms-service-app-ms2"
   type: "ClusterIP"     
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "ms-service-app-ms1"
+  namespace: "applications"
+  labels:
+    app: "ms-service-app-ms1"
+spec:
+  ports:
+  - protocol: "TCP"
+    port: 8081
+    targetPort: 8081
+  selector:
+    app: "ms-service-app-ms1"
+  type: "ClusterIP"    

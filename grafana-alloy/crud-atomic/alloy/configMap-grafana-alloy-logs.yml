@@ -121,6 +121,12 @@ data:
             cluster = "autopilot-cluster-app",
           }
       }
+      // Drop 8kb INFO|DEBUG level logs
+      stage.drop {
+        expression  = ".*\"severity\":\"(INFO|info|WARNING|warning|DEBUG|debug|WARN|warn)\".*"
+        longer_than = "8KB"
+      }
+
       stage.static_labels {
           values = {
             cluster = "autopilot-cluster-app",
@@ -169,7 +175,30 @@ data:
       }
     }    
     
+    // Alloy Health Logs Integration
     logging {
-      level  = "info"
-      format = "logfmt"
-    } 
+      write_to = [loki.process.alloy.receiver]
+      format = "json"
+    }
+    loki.process "alloy" {
+      forward_to = [loki.relabel.alloy.receiver]
+      stage.regex {
+        expression = "(level=(?P<log_level>[\\s]*debug|warn|info|error))"
+      }
+      stage.labels {
+        values = {
+          level = "log_level",
+        }
+      }
+    }
+    loki.relabel "alloy" {
+      forward_to = [loki.write.logs_service.receiver]
+      rule {
+        replacement = constants.hostname
+        target_label  = "instance"
+      }
+      rule {
+        target_label = "job"
+        replacement  = "integrations/alloy"
+      }
+    }
