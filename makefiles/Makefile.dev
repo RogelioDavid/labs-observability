@@ -92,3 +92,5 @@ install-prometheus-node-exporter:
 kubectl-add-annotations-java-auto-instrumentation
     kubectl annotate namespace applications instrumentation.opentelemetry.io/inject-java=opentelemetry-collector/auto-instrumentation instrumentation.opentelemetry.io/container-names=app
 	
+kubectl-process-java-auto-instrumentation: kubectl-add-annotations-java-auto-instrumentation
+    kubectl delete --all pods --namespace=applications
