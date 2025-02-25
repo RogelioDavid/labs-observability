@@ -32,6 +32,10 @@ spec:
   - name: grafana-agent-otlp-otr-traces
     port: 9464
     targetPort: 9464
+  - name: grafana-agent-otlp-zipkin-traces
+    port: 9411
+    targetPort: 9411
+    protocol: TCP    
   selector:
     name: grafana-alloy-traces
   type: "LoadBalancer"

@@ -101,6 +101,3 @@ otelcol.exporter.otlp "basetotlp" {
     auth     = otelcol.auth.basic.tempo.handler
   }
 }
-otelcol.exporter.logging "defaultlogging" {
-  verbosity = "normal"
-}

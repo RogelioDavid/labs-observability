@@ -20,6 +20,7 @@ spec:
           - run
           - /etc/agent/config.alloy
           - --storage.path=/var/lib/alloy/data
+          - --cluster.max-join-peers=6
           - --server.http.listen-addr=0.0.0.0:12345      
         env:
         - name: HOSTNAME

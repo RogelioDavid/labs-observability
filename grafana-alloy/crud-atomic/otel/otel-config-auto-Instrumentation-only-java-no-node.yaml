@@ -21,9 +21,10 @@ spec:
       value: "true"
 
   nodejs:
-    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-nodejs:0.40.0
     env:
     - name: OTEL_INSTRUMENTATION_HTTP_CLIENT_CAPTURE_REQUEST_HEADERS
       value: "true"
+    - name: OTEL_EXPORTER_OTLP_ENDPOINT
+      value: "http://lb-grafana-alloy-traces.monitoring.svc.cluster.local:4317"
  
 

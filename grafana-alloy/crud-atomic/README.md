@@ -50,7 +50,7 @@ Por otro lado  mantiene los Mismo Pros / Cons del modo estatico, ademas maneja p
 
 ## 1 - Crear Cluster
 ````
-  - make create-cluster-simple 
+  - make create-cluster-simple-2 
   -  gcloud container clusters get-credentials autopilot-cluster-app --zone=us-central1-a --project sparta-proyect-host 
  
 ```` 
@@ -80,6 +80,9 @@ Por otro lado  mantiene los Mismo Pros / Cons del modo estatico, ademas maneja p
 
 ````
   - kubectl apply -f .\grafana-alloy\crud-atomic\otel\otel-config-auto-Instrumentation.yaml
+
+  - kubectl apply -f .\grafana-alloy\crud-atomic\otel\otel-config-auto-Instrumentation-only-java-no-node.yaml
+
 ````
 
 ## 5.2- instalar la opcion de collector en modo Sidecar de otel y utilizando la instrumentacion manual hacia al collector grafana-alloy de trazas
@@ -98,8 +101,9 @@ Por otro lado  mantiene los Mismo Pros / Cons del modo estatico, ademas maneja p
 
 ## 6.1- Opcion de instalar los microservicios utilizados solo declarando la auto instrumentacion para enviarlo al alloy de trazas (paso 5.1) y ejecutando la anotacion a nivel de namespace
 ````
+  - make kubectl-add-annotations-java-auto-instrumentation
+  - make kubectl-add-annotations-node-auto-instrumentation
   - kubectl apply -f .\minifiest\apps\replicaset-apps-with-auto-Instrumentation.yml 
-  - make kubectl-add-annotations-auto-instrumentation
 
 ````
 
@@ -118,7 +122,7 @@ Por otro lado  mantiene los Mismo Pros / Cons del modo estatico, ademas maneja p
 ````
 ## 6.4- usando instalacion limpia sin nada  (Esta Opcion es para probar el limpio la recoleccion de alloy sin trazas) 
 ````
-  - kubectl delete -f .\minifiest\apps\replicaset-apps.yml 
+  - kubectl apply -f .\minifiest\apps\replicaset-apps.yml 
 
 ```` 
 

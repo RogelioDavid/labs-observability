@@ -14,26 +14,26 @@ spec:
   selector:
     name: grafana-alloy-metrics
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: lb-grafana-alloy-metrics
-  namespace: monitoring
-  labels:
-    app: grafana-alloy-metrics
-spec:
-  ports:
-  - name: grafana-alloy-otlp-cgrp-metrics
-    port: 4317
-    targetPort: 4317
-  - name: grafana-alloy-otlp-http-metrics
-    port: 4318
-    targetPort: 4318
-  - name: grafana-agent-otlp-otr-metrics
-    port: 9464
-    targetPort: 9464
-  selector:
-    name: grafana-alloy-metrics
-  type: "LoadBalancer"
-  loadBalancerIP: ""    
----
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: lb-grafana-alloy-metrics
+#   namespace: monitoring
+#   labels:
+#     app: grafana-alloy-metrics
+# spec:
+#   ports:
+#   - name: grafana-alloy-otlp-cgrp-metrics
+#     port: 4317
+#     targetPort: 4317
+#   - name: grafana-alloy-otlp-http-metrics
+#     port: 4318
+#     targetPort: 4318
+#   - name: grafana-agent-otlp-otr-metrics
+#     port: 9464
+#     targetPort: 9464
+#   selector:
+#     name: grafana-alloy-metrics
+#   type: "LoadBalancer"
+#   loadBalancerIP: ""    
+# ---
