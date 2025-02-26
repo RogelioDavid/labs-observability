@@ -133,6 +133,50 @@ data:
     }
     
 
+    tracing {
+      sampling_fraction = 0.8
+      write_to = [otelcol.processor.tail_sampling.tail_sampling_default.input]
+    }
+
+    otelcol.processor.tail_sampling "tail_sampling_default" {
+      decision_wait               = "10s"
+      num_traces                  = 50000
+      expected_new_traces_per_sec = 5000
+      policy {
+        name = "all_traces_above_1000ms"
+        type = "latency"
+        latency {
+          threshold_ms = 1000
+        }
+      }
+      policy {
+        name = "sampling_percentage_probabilistic"
+        type = "probabilistic"
+        probabilistic {
+            sampling_percentage = 10
+        }
+      }
+      policy {
+        name = "policy_status_code"
+        type = "status_code"
+        status_code {
+          status_codes = ["ERROR", "UNSET"]
+        }
+      }
+      policy {
+        name = "policy_rate_limiting"
+        type = "rate_limiting"
+        rate_limiting {
+          spans_per_second = 100
+        }
+      }	
+      output {
+        traces = [otelcol.exporter.otlp.rogmen_traces.input]
+      }
+    }
+
+
+
     // Feature: Application Observability
     declare "application_observability" {
       argument "metrics_destinations" {
@@ -250,10 +294,33 @@ data:
         output {
           metrics = [otelcol.processor.batch.default.input]
           logs = [otelcol.processor.batch.default.input]
-          traces = [otelcol.processor.batch.default.input]
+          traces = [otelcol.processor.filter.filterdefault.input]
         }
       }
-    
+
+    otelcol.processor.filter "filterdefault" {
+      error_mode = "ignore"
+      traces {
+        span = [
+          "IsMatch(attributes[\"http.route\"], \".*prometheus.*\")",
+          "IsMatch(attributes[\"http.route\"], \".*health.*\")",
+          "IsMatch(attributes[\"http.target\"], \".*health.*\")",
+          "IsMatch(attributes[\"http.target\"], \".*health_check.*\")",
+          "IsMatch(attributes[\"db.operation\"], \".*PING.*\")",
+          "IsMatch(attributes[\"express.type\"], \".*middleware.*\")",
+          "IsMatch(attributes[\"express.type\"], \".*router.*\")",
+          "IsMatch(attributes[\"db.operation\"], \".*EXIST.*\")",
+          "IsMatch(attributes[\"express.name\"], \".*request handler.*\")",
+          "IsMatch(attributes[\"net.peer.port\"], \".*9000.*\")",
+          "IsMatch(attributes[\"db.system\"], \".*redis.*\")",
+        ]
+      }
+
+      output {
+        traces = [otelcol.processor.batch.default.input]
+      }
+    }    
+
       // Batch Processor
       otelcol.processor.batch "default" {
         send_batch_size = 8192

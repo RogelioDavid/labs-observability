@@ -48,7 +48,7 @@ Por otro lado  mantiene los Mismo Pros / Cons del modo estatico, ademas maneja p
 
 # PASOS PARA LEVANTA GRAFANA ALLOY
 
-## 1 - Crear Cluster
+## 1 - Crear Cluster (PAra esto debes tener tu propia cuenta y tener seatdo SDK de google para trabajar en tu proyecto)
 ````
   - make create-cluster-simple-2 
   -  gcloud container clusters get-credentials autopilot-cluster-app --zone=us-central1-a --project sparta-proyect-host 
@@ -79,7 +79,12 @@ Por otro lado  mantiene los Mismo Pros / Cons del modo estatico, ademas maneja p
 ## 5.1- instalar la opcion de auto-instrumentacion para enviarlo al alloy de trazas hacia grafana-alloy
 
 ````
+si se busca usar la opcion de probar todo auto-instrumentado 
+
   - kubectl apply -f .\grafana-alloy\crud-atomic\otel\otel-config-auto-Instrumentation.yaml
+
+
+si se busca usar la opcion de probar auto-instrumentado en java y node con instrumentacion estandar manual 
 
   - kubectl apply -f .\grafana-alloy\crud-atomic\otel\otel-config-auto-Instrumentation-only-java-no-node.yaml
 
@@ -100,13 +105,27 @@ Por otro lado  mantiene los Mismo Pros / Cons del modo estatico, ademas maneja p
 # MANIFIESTOS PARA INSTANAR LA APLICACION
 
 ## 6.1- Opcion de instalar los microservicios utilizados solo declarando la auto instrumentacion para enviarlo al alloy de trazas (paso 5.1) y ejecutando la anotacion a nivel de namespace
+
+
+
 ````
+Agregar las anotaciones de instrumentacion 
   - make kubectl-add-annotations-java-auto-instrumentation
   - make kubectl-add-annotations-node-auto-instrumentation
-  - kubectl apply -f .\minifiest\apps\replicaset-apps-with-auto-Instrumentation.yml 
 
 ````
 
+````
+
+si se busca usar la opcion de probar todo auto-instrumentado 
+
+  - kubectl apply -f .\minifiest\apps\replicaset-apps-with-auto-Instrumentation-all.yml 
+
+si se busca usar la opcion de probar auto-instrumentado en java y node con instrumentacion estandar manual 
+
+  - kubectl apply -f .\minifiest\apps\replicaset-apps-with-auto-Instrumentation-java.yml 
+
+````
 
 
 
