@@ -88,6 +88,13 @@ si se busca usar la opcion de probar auto-instrumentado en java y node con instr
 
   - kubectl apply -f .\grafana-alloy\crud-atomic\otel\otel-config-auto-Instrumentation-only-java-no-node.yaml
 
+
+Esta opcion permite probar declaraciones de multiples auto-instrumentacion para considerar el contextualizacion de varios tipos de colectores
+
+  - kubectl apply -f .\grafana-alloy\crud-atomic\otel\otel-config-multiple-auto-Instrumentation.yaml
+
+
+
 ````
 
 ## 5.2- instalar la opcion de collector en modo Sidecar de otel y utilizando la instrumentacion manual hacia al collector grafana-alloy de trazas
@@ -109,12 +116,17 @@ si se busca usar la opcion de probar auto-instrumentado en java y node con instr
 
 
 ````
-Agregar las anotaciones de instrumentacion 
+Agregar las anotaciones de un solo manifiesto de auto-instrumentacion  (otel-config-auto-Instrumentation.yaml | otel-config-auto-Instrumentation-only-java-no-node.yaml)
   - make kubectl-add-annotations-java-auto-instrumentation
   - make kubectl-add-annotations-node-auto-instrumentation
 
 ````
+````
+Agregar las anotaciones de instrumentacion  con multiple auto-instrumentacion (otel-config-multiple-auto-Instrumentation.yaml)
+  - make kubectl-add-annotations-java-m-auto-instrumentation
+  - make kubectl-add-annotations-node-m-auto-instrumentation
 
+````
 ````
 
 si se busca usar la opcion de probar todo auto-instrumentado 

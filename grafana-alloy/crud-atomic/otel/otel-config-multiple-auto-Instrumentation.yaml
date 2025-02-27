@@ -1,0 +1,45 @@
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: java-auto-instrumentation
+  namespace: opentelemetry-collector
+spec:
+  exporter:
+    endpoint: http://lb-grafana-alloy-traces.monitoring.svc.cluster.local:4317
+  propagators:
+  - tracecontext
+  - baggage
+  - b3
+  sampler:
+    argument: '1'
+    type: parentbased_traceidratio
+
+  java:
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-java:1.33.5
+    env:
+    - name: OTEL_INSTRUMENTATION_HTTP_CLIENT_CAPTURE_REQUEST_HEADERS
+      value: "true"
+---
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: node-auto-instrumentation
+  namespace: opentelemetry-collector
+spec:
+  exporter:
+    endpoint: http://lb-grafana-alloy-traces.monitoring.svc.cluster.local:4317
+  propagators:
+  - tracecontext
+  - baggage
+  - b3
+  sampler:
+    argument: '1'
+    type: parentbased_traceidratio
+
+  nodejs:
+    env:
+    - name: OTEL_INSTRUMENTATION_HTTP_CLIENT_CAPTURE_REQUEST_HEADERS
+      value: "true"
+    - name: OTEL_EXPORTER_OTLP_ENDPOINT
+      value: "http://lb-grafana-alloy-traces.monitoring.svc.cluster.local:4317" 
+

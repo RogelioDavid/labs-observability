@@ -99,6 +99,14 @@ kubectl-add-annotations-java-auto-instrumentation:
 kubectl-add-annotations-node-auto-instrumentation:
 	kubectl annotate namespace clients instrumentation.opentelemetry.io/inject-nodejs=opentelemetry-collector/auto-instrumentation instrumentation.opentelemetry.io/container-names=app
 
+
+kubectl-add-annotations-java-m-auto-instrumentation:
+	kubectl annotate namespace applications instrumentation.opentelemetry.io/inject-java=opentelemetry-collector/java-auto-instrumentation instrumentation.opentelemetry.io/container-names=app
+
+kubectl-add-annotations-node-m-auto-instrumentation:
+	kubectl annotate namespace clients instrumentation.opentelemetry.io/inject-nodejs=opentelemetry-collector/node-auto-instrumentation instrumentation.opentelemetry.io/container-names=app
+
+
 kubectl-process-java-auto-instrumentation: 
     kubectl delete --all pods --namespace=applications
 
