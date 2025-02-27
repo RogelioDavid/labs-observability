@@ -1,0 +1,72 @@
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: grafana-alloy-metrics-apps
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: grafana-alloy-metrics-apps
+  serviceName: grafana-alloy-metrics-apps
+  template:
+    metadata:
+      labels:
+        name: grafana-alloy-metrics-apps
+    spec:
+      containers:
+      - args:
+          - run
+          - /etc/agent/config.alloy
+          - --storage.path=/var/lib/alloy/data
+          - --cluster.max-join-peers=6
+          - --server.http.listen-addr=0.0.0.0:12345      
+        env:
+        - name: HOSTNAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        image: grafana/alloy:v1.6.1
+        imagePullPolicy: IfNotPresent
+        name: grafana-alloy-metrics-apps
+        ports:
+        - containerPort: 80
+          name: http-metrics
+        - containerPort: 4317
+        - containerPort: 4318
+        - containerPort: 9464        
+        volumeMounts:
+        - mountPath: /etc/agent/config.alloy
+          name: grafana-alloy-metrics-apps
+      serviceAccountName: grafana-alloy-metrics
+      volumes:
+      - configMap:
+          name: grafana-alloy-metrics-apps
+        name: grafana-alloy-metrics-apps
+  updateStrategy:
+    type: RollingUpdate
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: agent-wal-metrics-apps
+      namespace: monitoring
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 5Gi          
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-alloy-claim0-metrics-apps
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+status: {}

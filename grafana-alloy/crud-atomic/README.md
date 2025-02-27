@@ -70,8 +70,9 @@ Por otro lado  mantiene los Mismo Pros / Cons del modo estatico, ademas maneja p
 ## 4.- instalacion Grafana Alloy
 
 ````
-   -  kubectl apply -f .\grafana-alloy\crud-atomic\alloy\
-   -  
+   -  kubectl apply -f .\grafana-alloy\crud-atomic\alloy\logs\
+   -  kubectl apply -f .\grafana-alloy\crud-atomic\alloy\metrics\
+   -  kubectl apply -f .\grafana-alloy\crud-atomic\alloy\traces\
 ````
 
 # MANIFIESTOS PARA LA UTILIZACION DE OPEN-TELEMETRY
