@@ -1,0 +1,60 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: services-app
+  labels:
+    cloud.googleapis.com/location: us-central1
+  annotations:
+    serving.knative.dev/creator: rogmen@gmail.com
+    serving.knative.dev/lastModifier: rogmen@gmail.com
+    run.googleapis.com/ingress: all
+    run.googleapis.com/ingress-status: all
+spec:
+  template:
+    metadata:
+      labels:
+        run.googleapis.com/startupProbeType: Default
+      annotations:
+        autoscaling.knative.dev/maxScale: '5'
+        autoscaling.knative.dev/minScale: '1'
+        run.googleapis.com/client-name: cloud-console
+        run.googleapis.com/startup-cpu-boost: 'true'
+    spec:
+      containerConcurrency: 80
+      timeoutSeconds: 300
+      containers:
+      - name: ms-service-app-ms1-simple-1
+        image: rmendoza/ms-service-app-ms1-simple
+        ports:
+        - name: http1
+          containerPort: 8081
+        resources:
+          limits:
+            memory: 512Mi
+            cpu: 1000m
+        startupProbe:
+          timeoutSeconds: 240
+          periodSeconds: 240
+          failureThreshold: 1
+          tcpSocket:
+            port: 8081
+      - name: collector-alloy-1
+        image: rmendoza/collector-alloy:v1
+        args:
+        - run
+        - --server.http.listen-addr=0.0.0.0:12345
+        - --storage.path=/var/lib/alloy/data
+        - /etc/alloy/config.alloy
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 512Mi
+        startupProbe:
+          timeoutSeconds: 240
+          periodSeconds: 240
+          failureThreshold: 1
+          tcpSocket:
+            port: 8081
+  traffic:
+  - percent: 100
+    latestRevision: true
