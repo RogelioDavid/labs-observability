@@ -45,7 +45,10 @@ otelcol.receiver.otlp "receiverbase" {
   output {
     metrics = [otelcol.processor.batch.processorbatch.input]
     logs    = [otelcol.processor.batch.processorbatch.input]
-    traces = [otelcol.processor.resourcedetection.app_obs.input, otelcol.connector.host_info.app_obs.input]
+    traces = [otelcol.connector.servicegraph.servicegraphbase.input,
+			        otelcol.connector.spanmetrics.spanmetricsbse.input,
+              otelcol.processor.resourcedetection.app_obs.input, 
+              otelcol.connector.host_info.app_obs.input]
   }
 }
 

@@ -27,7 +27,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        image: grafana/alloy:v1.6.1
+        image: grafana/alloy:v1.8.0
         imagePullPolicy: IfNotPresent
         name: grafana-alloy-metrics-apps
         ports:

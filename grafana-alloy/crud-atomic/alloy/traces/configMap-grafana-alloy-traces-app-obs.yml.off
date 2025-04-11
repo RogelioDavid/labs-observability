@@ -133,11 +133,6 @@ data:
     }
     
 
-    tracing {
-      sampling_fraction = 0.1
-      write_to = [otelcol.processor.tail_sampling.tail_sampling_default.input]
-    }
-
     otelcol.processor.tail_sampling "tail_sampling_default" {
       decision_wait               = "10s"
       num_traces                  = 50000
@@ -153,7 +148,7 @@ data:
         name = "sampling_percentage_probabilistic"
         type = "probabilistic"
         probabilistic {
-            sampling_percentage = 10
+            sampling_percentage = 80
         }
       }
       policy {
@@ -163,13 +158,6 @@ data:
           status_codes = ["ERROR", "UNSET"]
         }
       }
-      policy {
-        name = "policy_rate_limiting"
-        type = "rate_limiting"
-        rate_limiting {
-          spans_per_second = 100
-        }
-      }	
       output {
         traces = [otelcol.exporter.otlp.rogmen_traces.input]
       }

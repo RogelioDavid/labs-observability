@@ -72,7 +72,7 @@ services:
       - "8082:8082"
 
   grafana-alloy-traces:
-    image: grafana/alloy:v1.7.1
+    image: grafana/alloy:v1.8.0
     volumes:
       - ./config/config-traces.alloy:/etc/agent/config.alloy
     command:
@@ -90,7 +90,7 @@ services:
        - "9464:9464"
        
   grafana-alloy-metrics-logs:
-    image: grafana/alloy:v1.7.1
+    image: grafana/alloy:v1.8.0
     volumes:
       - ./config/config-metrics-logs.alloy:/etc/agent/config.alloy
       - ./logs/hello-observability.log:/tmp/hello-observability.log

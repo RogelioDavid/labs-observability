@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: ReplicaSet
 metadata:
-  name: ms-user-observability-services-45t45f67h9
+  name: ms-user-observability-services
   namespace: "clients"  
   labels:
     app: ms-user-observability-services
@@ -55,7 +55,7 @@ spec:
 apiVersion: apps/v1
 kind: ReplicaSet
 metadata:
-  name: ms-hello-observability-services-45t45f67h9
+  name: ms-hello-observability-services
   namespace: "applications"  
   labels:
     app: ms-hello-observability-services
@@ -109,7 +109,7 @@ spec:
 apiVersion: apps/v1
 kind: ReplicaSet
 metadata:
-  name: ms-service-app-ms2-45t45f67h9
+  name: ms-service-app-ms2
   namespace: "applications"  
   labels:
     app: ms-service-app-ms2
@@ -163,7 +163,7 @@ spec:
 apiVersion: apps/v1
 kind: ReplicaSet
 metadata:
-  name: ms-service-app-ms1-45t45f67h9
+  name: ms-service-app-ms1
   namespace: "applications"  
   labels:
     app: ms-service-app-ms1

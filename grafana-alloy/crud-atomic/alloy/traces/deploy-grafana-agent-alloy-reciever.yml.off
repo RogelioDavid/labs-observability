@@ -18,7 +18,7 @@ spec:
       serviceAccountName: grafana-alloy-reciever
       containers:
         - name: alloy
-          image: docker.io/grafana/alloy:v1.6.1
+          image: grafana/alloy:v1.8.0
           imagePullPolicy: IfNotPresent
           args:
             - run
