@@ -5,7 +5,7 @@ metadata:
   namespace: "clients"  
   labels:
     app: ms-user-observability-services
-    tier: backend
+    tier: frontend
 spec:
   replicas: 1
   selector:
