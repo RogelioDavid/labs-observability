@@ -45,10 +45,43 @@ otelcol.receiver.otlp "receiverbase" {
   output {
     metrics = [otelcol.processor.batch.processorbatch.input]
     logs    = [otelcol.processor.batch.processorbatch.input]
-    traces  = [otelcol.exporter.otlp.basetotlp.input,
-			   otelcol.connector.servicegraph.servicegraphbase.input,
-			   otelcol.connector.spanmetrics.spanmetricsbse.input,
-			   otelcol.processor.batch.processorbatch.input]
+    traces = [otelcol.connector.servicegraph.servicegraphbase.input,
+			        otelcol.connector.spanmetrics.spanmetricsbse.input,
+              otelcol.processor.resourcedetection.app_obs.input, 
+              otelcol.connector.host_info.app_obs.input]
+  }
+}
+
+  // Processor Resource Detetion
+otelcol.processor.resourcedetection "app_obs" {
+  detectors = ["env","system"]
+  system {
+    hostname_sources = ["os"]
+  }
+  output {
+    metrics = [otelcol.processor.transform.app_obs.input]
+    logs = [otelcol.processor.transform.app_obs.input]
+    traces = [otelcol.processor.transform.app_obs.input]
+  }
+}
+
+ 
+// Processor Transform 
+otelcol.processor.transform "app_obs" {
+  error_mode = "ignore"
+  output {
+    metrics = [otelcol.processor.batch.processorbatch.input]
+    logs = [otelcol.processor.batch.processorbatch.input]
+    traces  = [otelcol.processor.batch.processorbatch.input]        
+  }
+}
+
+
+otelcol.connector.host_info "app_obs" {
+  host_identifiers = ["host.name"]
+
+  output {
+    metrics = [otelcol.processor.batch.processorbatch.input]
   }
 }
 
