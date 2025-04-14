@@ -11,12 +11,16 @@ spec:
   - name: grafana-alloy-http-metrics-metrics-apps
     port: 80
     targetPort: 80
-  - name: grafana-alloy-otlp-cgrp-metrics-apps
+  - name: grafana-alloy-otlp-cgrp-metrics
     port: 4317
     targetPort: 4317
-  - name: grafana-alloy-otlp-http-metrics-apps
+  - name: grafana-alloy-otlp-http-metrics
     port: 4318
     targetPort: 4318
+  - name: grafana-agent-otlp-otr-metrics
+    port: 9464
+    targetPort: 9464
+
   selector:
     name: grafana-alloy-metrics-apps
 ---

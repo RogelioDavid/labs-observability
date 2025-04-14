@@ -21,11 +21,17 @@ spec:
     spec:
       containers:
         - name: app
-          image: rmendoza/user-observability-simple:v1.1
+          image: rmendoza/user-observability-manual:v1.0
           imagePullPolicy: Always
           ports:
           - name: out-http
             containerPort: 3000
+          env:
+          - name: OTEL_SERVICE_NAME
+            value: ms-user-observability-services
+          - name: OTEL_EXPORTER_OTLP_ENDPOINT
+            value: http://lb-grafana-alloy-traces.monitoring.svc.cluster.local:4317
+
           startupProbe:
             httpGet:
               path: /health/liveness
@@ -80,6 +86,11 @@ spec:
           ports:
           - name: out-http
             containerPort: 8080
+          env:
+          - name: OTEL_SERVICE_NAME
+            value: ms-hello-observability-services
+          - name: JAVA_TOOL_OPTIONS
+            value: -Dotel.instrumentation.http.server.capture-request-headers=x-request-id -Dotel.instrumentation.servlet.experimental-span-attributes=true -Dotel.instrumentation.http.server.capture-request-headers=x-request-id -Dotel.instrumentation.servlet.capture-headers=x-request-id -Dotel.instrumentation.common.default-enabled=true -Dotel.instrumentation.micrometer.enabled=true -Dotel.instrumentation.common-metrics.enabled=true -Dotel.instrumentation.common.default-enabled=true -Dotel.instrumentation.servlet-metrics.enabled=true -Dotel.instrumentation.common.enabled=true -Dotel.instrumentation.runtime-telemetry.enabled=true
           startupProbe:
             httpGet:
               path: /actuator/health/liveness
@@ -134,6 +145,11 @@ spec:
           ports:
           - name: out-http
             containerPort: 8082
+          env:
+          - name: OTEL_SERVICE_NAME
+            value: ms-service-app-ms2
+          - name: JAVA_TOOL_OPTIONS
+            value: -Dotel.instrumentation.http.server.capture-request-headers=x-request-id -Dotel.instrumentation.servlet.experimental-span-attributes=true -Dotel.instrumentation.http.server.capture-request-headers=x-request-id -Dotel.instrumentation.servlet.capture-headers=x-request-id -Dotel.instrumentation.common.default-enabled=true -Dotel.instrumentation.micrometer.enabled=true -Dotel.instrumentation.common-metrics.enabled=true -Dotel.instrumentation.common.default-enabled=true -Dotel.instrumentation.servlet-metrics.enabled=true -Dotel.instrumentation.common.enabled=true -Dotel.instrumentation.runtime-telemetry.enabled=true
           startupProbe:
             httpGet:
               path: /actuator/health/liveness
@@ -189,6 +205,11 @@ spec:
           ports:
           - name: out-http
             containerPort: 8081
+          env:
+          - name: OTEL_SERVICE_NAME
+            value: ms-service-app-ms1
+          - name: JAVA_TOOL_OPTIONS
+            value: -Dotel.instrumentation.http.server.capture-request-headers=x-request-id -Dotel.instrumentation.servlet.experimental-span-attributes=true -Dotel.instrumentation.http.server.capture-request-headers=x-request-id -Dotel.instrumentation.servlet.capture-headers=x-request-id -Dotel.instrumentation.common.default-enabled=true -Dotel.instrumentation.micrometer.enabled=true -Dotel.instrumentation.common-metrics.enabled=true -Dotel.instrumentation.common.default-enabled=true -Dotel.instrumentation.servlet-metrics.enabled=true -Dotel.instrumentation.common.enabled=true -Dotel.instrumentation.runtime-telemetry.enabled=true
           startupProbe:
             httpGet:
               path: /actuator/health/liveness

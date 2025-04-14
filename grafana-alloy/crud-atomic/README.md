@@ -63,13 +63,15 @@ Por otro lado  mantiene los Mismo Pros / Cons del modo estatico, ademas maneja p
 ## 3.- instalar los Custom Resource para soportar Open Telemetry Collector
 
 ````
-  - kubectl apply  -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.5/cert-manager.yaml
+  - kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.5/cert-manager.yaml
   - kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml
 ````
 
 ## 4.- instalacion Grafana Alloy
 
 ````
+   -  kubectl apply -R -f .\grafana-alloy\crud-atomic\alloy\ 
+
    -  kubectl apply -f .\grafana-alloy\crud-atomic\alloy\logs\
    -  kubectl apply -f .\grafana-alloy\crud-atomic\alloy\metrics\
    -  kubectl apply -f .\grafana-alloy\crud-atomic\alloy\traces\
