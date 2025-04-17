@@ -287,7 +287,7 @@ data:
       send_batch_size = 10000
       send_batch_max_size = 11000
       output {
-        metrics = [otelcol.exporter.otlp.basetotlp.input]
+        metrics = [otelcol.exporter.prometheus.default.input]
         logs    = [otelcol.exporter.otlp.basetotlp.input]
         traces  = [otelcol.exporter.otlp.basetotlp.input]
       }

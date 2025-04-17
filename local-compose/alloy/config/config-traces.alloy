@@ -3,52 +3,17 @@ logging {
     format = "logfmt"
 }
 
-// Prometheus configs
-prometheus.remote_write "metrics_hello_observability" {
-  external_labels = {
-    monitor = "hello-observability",
-  }
-  endpoint {
-    name = "hello-observability-6397c4"
-	url  = "https://prometheus-us-central1.grafana.net/api/prom/push"
-	basic_auth {
-	  username = "821057"
-	  password = "eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0="
-	}
-  }
-}
- 
-
-
-// OtelCol configs
-
-otelcol.auth.basic "tempo" {
-  username = 406010
-  password = "eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0="
-}
-otelcol.auth.basic "promp" {
-  username = 406010
-  password ="eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0="
-}
-
-otelcol.processor.batch "processorbatch" {
-  output {
-    metrics = [otelcol.exporter.otlp.basetotlp.input]
-    logs    = [otelcol.exporter.otlp.basetotlp.input]
-    traces  = [otelcol.exporter.otlp.basetotlp.input]
-  }
-}
 otelcol.receiver.otlp "receiverbase" {
   grpc {
     endpoint = "0.0.0.0:4317"
   }
+  http {
+    endpoint = "0.0.0.0:4318"
+  }  
   output {
     metrics = [otelcol.processor.batch.processorbatch.input]
     logs    = [otelcol.processor.batch.processorbatch.input]
-    traces = [otelcol.connector.servicegraph.servicegraphbase.input,
-			        otelcol.connector.spanmetrics.spanmetricsbse.input,
-              otelcol.processor.resourcedetection.app_obs.input, 
-              otelcol.connector.host_info.app_obs.input]
+    traces = [ otelcol.processor.resourcedetection.app_obs.input]
   }
 }
 
@@ -61,9 +26,20 @@ otelcol.processor.resourcedetection "app_obs" {
   output {
     metrics = [otelcol.processor.transform.app_obs.input]
     logs = [otelcol.processor.transform.app_obs.input]
-    traces = [otelcol.processor.transform.app_obs.input]
+    traces = [otelcol.processor.memory_limiter.memory_limiter.input]
   }
 }
+
+    otelcol.processor.memory_limiter "memory_limiter" {
+      check_interval = "5s"
+      limit = "400MiB"        // Hard Limit
+      spike_limit = "100MiB"  // Soft Limit = Hard Limit - spike_limit = 300MiB
+      output {
+        traces  = [otelcol.processor.transform.app_obs.input,
+                  otelcol.connector.host_info.app_obs.input]
+
+      }
+    } 
 
  
 // Processor Transform 
@@ -85,6 +61,16 @@ otelcol.connector.host_info "app_obs" {
   }
 }
 
+otelcol.processor.batch "processorbatch" {
+  output {
+    metrics = [otelcol.exporter.prometheus.default.input]
+    logs    = [otelcol.exporter.otlp.basetotlp.input]
+    traces  = [otelcol.exporter.otlp.basetotlp.input,
+	           otelcol.connector.servicegraph.servicegraphbase.input,
+               otelcol.connector.spanmetrics.spanmetricsbse.input]
+  }
+}
+
 otelcol.receiver.prometheus "prometheusdefault" {
   output {
     metrics = [otelcol.exporter.otlp.basetotlp.input]
@@ -92,7 +78,7 @@ otelcol.receiver.prometheus "prometheusdefault" {
 }
 
 otelcol.connector.servicegraph "servicegraphbase" {
-  dimensions = ["http.method", "http.target"]
+  dimensions = ["http.method", "http.target", "http.status_code", "http.route","http.request.header.x.tenant.id","http.request.header.x_tenant_id","x_tenant_id"]
   latency_histogram_buckets = ["100ms", "250ms", "500ms", "1s", "2s", "5s", "10s"]	
   store {
 	max_items = 20
@@ -110,6 +96,29 @@ otelcol.connector.spanmetrics "spanmetricsbse" {
     name = "http.method"
     default = "GET"
   }
+  dimension {
+    name = "http.request.header.x.tenant.id"
+  }  
+  dimension {
+    name = "http.request.header.x_tenant_id"
+  }  
+  dimension {
+    name = "http.request.header.X_Tenant_Id"
+  }  
+  dimension {
+    name = "X_Tenant_ID"
+  }  
+  dimension {
+    name = "url.path"
+  }
+
+  dimension {
+    name = "http.route"
+  }
+
+  dimension {
+    name = "http.request.method"
+  }  
   dimensions_cache_size = 333
   aggregation_temporality = "DELTA"
   histogram {
@@ -119,9 +128,9 @@ otelcol.connector.spanmetrics "spanmetricsbse" {
     }
   }
   metrics_flush_interval = "15s"
-  namespace = "test.namespace"
+  namespace = "traces_spanmetrics_"
   output {
-    metrics = [otelcol.exporter.otlp.basetotlp.input]
+    metrics = [otelcol.exporter.prometheus.default.input]
   }
 }
 
@@ -133,4 +142,30 @@ otelcol.exporter.otlp "basetotlp" {
     endpoint = "tempo-us-central1.grafana.net:443"
     auth     = otelcol.auth.basic.tempo.handler
   }
+}
+
+
+// Prometheus configs
+prometheus.remote_write "metrics_hello_observability" {
+  external_labels = {
+    monitor = "hello-observability",
+  }
+  endpoint {
+    name = "hello-observability-6397c4"
+	url  = "https://prometheus-us-central1.grafana.net/api/prom/push"
+	basic_auth {
+	  username = "821057"
+	  password = "eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0="
+	}
+  }
+}
+// OtelCol configs
+
+otelcol.auth.basic "tempo" {
+  username = 406010
+  password = "eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0="
+}
+otelcol.auth.basic "promp" {
+  username = 406010
+  password ="eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0="
 }

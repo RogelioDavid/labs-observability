@@ -139,6 +139,7 @@ si se busca usar la opcion de probar todo auto-instrumentado
 si se busca usar la opcion de probar auto-instrumentado en java y node con instrumentacion estandar manual 
 
   - kubectl apply -f .\minifiest\apps\replicaset-apps-with-auto-Instrumentation-java.yml 
+  - kubectl apply -f .\minifiest\apps\replicaset-apps-with-auto-Instrumentation-multiple.yml
 
 ````
 
