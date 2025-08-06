@@ -32,8 +32,7 @@ data:
         endpoint = "0.0.0.0:4318"
       }      
       output {
-        metrics = [otelcol.processor.batch.processorbatch.input]
-        logs    = [otelcol.processor.batch.processorbatch.input]
+        metrics = [otelcol.processor.resourcedetection.default.input]
         traces  = [otelcol.processor.resourcedetection.default.input]
       }
     }
@@ -46,7 +45,6 @@ data:
       }
       output {
         metrics = [otelcol.processor.k8sattributes.default.input]
-        logs = [otelcol.processor.k8sattributes.default.input]
         traces = [otelcol.processor.k8sattributes.default.input]
       }
     }
@@ -71,17 +69,16 @@ data:
       }
   
       output {
-        metrics = [otelcol.processor.transform.default.input]
-        logs    = [otelcol.processor.transform.default.input]
+        metrics = [otelcol.processor.filter.filter_app_metrics.input]
         traces  = [otelcol.processor.memory_limiter.memory_limiter.input]
       }
     }
 
 
     otelcol.processor.memory_limiter "memory_limiter" {
-      check_interval = "5s"
-      limit = "400MiB"        // Hard Limit
-      spike_limit = "100MiB"  // Soft Limit = Hard Limit - spike_limit = 300MiB
+      check_interval = "1s"
+      limit_percentage = 80
+      spike_limit_percentage = 20      
       output {
         traces  = [otelcol.processor.transform.default.input,
                    otelcol.connector.host_info.default.input]
@@ -97,7 +94,18 @@ data:
         metrics = [otelcol.processor.batch.processorbatch.input]
       }
     }
-  
+
+    otelcol.processor.filter "filter_app_metrics" {
+      error_mode = "ignore"
+      metrics {
+          metric = [
+            "not IsMatch(resource.attributes[\"k8s.namespace.name\"], \"^xp-acl-.*\")",
+          ]
+      }
+      output {
+          metrics = [otelcol.processor.transform.default.input] 
+      }
+    }  
     // Transform Processor
     otelcol.processor.transform "default" {
       error_mode = "ignore"
@@ -109,23 +117,25 @@ data:
           "set(attributes[\"loki.resource.labels\"], \"cluster, namespace, job, pod\")",
         ]
       }
-      // trace_statements {
-      //   context = "resource"
-      //   statements = [
-      //     `replace_pattern(attributes["k8s.replicaset.name"], "-[0-9a-zA-Z]+$", "")`,
-      //     `set(attributes["service.name"], attributes["k8s.replicaset.name"])`,
-      //   ]
-      // }
-      // trace_statements {
-      //   context = "span"
-      //   statements = [
-      //     `replace_pattern(attributes["k8s.replicaset.name"], "-[0-9a-zA-Z]+$", "")`,
-      //     `set(attributes["service.name"], attributes["k8s.replicaset.name"]) where attributes["service.name"] == nil`,
-      //   ]
-      // }  
+      //metric_statements {
+      //  context = "resource"
+      //  statements = [
+      //    "set(attributes[\"service.name\"], attributes[\"k8s.pod.labels.app_kubernetes_io/name\"]) where attributes[\"k8s.pod.labels.app_kubernetes_io/name\"] != nil",
+      //    "set(attributes[\"service.name\"], attributes[\"k8s.deployment.name\"]) where attributes[\"k8s.deployment.name\"] != nil",
+      //    "set(attributes[\"service.name\"], attributes[\"k8s.statefulset.name\"]) where attributes[\"k8s.statefulset.name\"] != nil and attributes[\"service.name\"] == nil",
+      //    "set(attributes[\"service.name\"], attributes[\"k8s.daemonset.name\"]) where attributes[\"k8s.daemonset.name\"] != nil and attributes[\"service.name\"] == nil",
+      //    "set(attributes[\"service.name\"], attributes[\"k8s.cronjob.name\"]) where attributes[\"k8s.cronjob.name\"] != nil and attributes[\"service.name\"] == nil",
+      //    "set(attributes[\"service.name\"], attributes[\"k8s.job.name\"]) where attributes[\"k8s.job.name\"] != nil and attributes[\"service.name\"] == nil",
+      //    "set(attributes[\"service.name\"], attributes[\"k8s.replicaset.name\"]) where attributes[\"k8s.replicaset.name\"] != nil and attributes[\"service.name\"] == nil",
+      //    `replace_pattern(attributes["service.name"], "(-[0-9a-f]{8,10}|-[0-9]+)$", "") where attributes["service.name"] != nil`,
+      //    "set(attributes[\"service.namespace\"], attributes[\"k8s.namespace.name\"]) where attributes[\"k8s.namespace.name\"] != nil",
+      //    "set(attributes[\"job\"], Concat([attributes[\"service.namespace\"], attributes[\"service.name\"]], \"-\")) where attributes[\"service.name\"] != nil and attributes[\"service.namespace\"] != nil",
+      //    "set(attributes[\"namespace\"], attributes[\"k8s.namespace.name\"]) where attributes[\"k8s.namespace.name\"] != nil",
+      //    "set(attributes[\"service.instance.id\"], attributes[\"k8s.pod.uid\"]) where attributes[\"k8s.pod.uid\"] != nil and attributes[\"service.instance.id\"] == nil",
+      //  ]
+      //}      
       output {
         metrics = [otelcol.processor.batch.processorbatch.input]
-        logs = [otelcol.processor.batch.processorbatch.input]
         traces = [otelcol.processor.filter.default.input]
       }
     }
@@ -160,11 +170,52 @@ data:
         statements = [
           "set(attributes[\"cluster\"], \"autopilot-cluster-app\")",
           "set(attributes[\"k8s.cluster.name\"], \"autopilot-cluster-app\")" ,
+          "set(attributes[\"service.namespace\"], attributes[\"k8s.namespace.name\"]) where attributes[\"k8s.namespace.name\"] != nil",
+          "set(attributes[\"service.instance.id\"], attributes[\"k8s.pod.uid\"]) where attributes[\"k8s.pod.uid\"] != nil",
+          "delete_key(attributes, \"process.command\")",
+          "delete_key(attributes, \"process.command_args\")",
+          "delete_key(attributes, \"process.executable.path\")",
+          "delete_key(attributes, \"process.executable.name\")",
+          //"set(attributes[\"service.name\"], attributes[\"k8s.pod.labels.app_kubernetes_io/name\"]) where attributes[\"k8s.pod.labels.app_kubernetes_io/name\"] != nil",
+          //"set(attributes[\"service.name\"], attributes[\"k8s.deployment.name\"]) where attributes[\"k8s.deployment.name\"] != nil and attributes[\"service.name\"] == nil",
+          //"set(attributes[\"service.name\"], attributes[\"k8s.replicaset.name\"]) where attributes[\"k8s.replicaset.name\"] != nil and attributes[\"service.name\"] == nil",
+          //"set(attributes[\"service.name\"], attributes[\"k8s.statefulset.name\"]) where attributes[\"k8s.statefulset.name\"] != nil and attributes[\"service.name\"] == nil",
+          //`replace_pattern(attributes["service.name"], "(-[0-9a-f]{8,10}|-[0-9]+)$", "") where attributes["service.name"] != nil`,                    
         ]
       }
-    
+      trace_statements {
+        context = "span"
+        statements = [
+          //`set(attributes["http.request.header.x-latam-action-name"], attributes["http.request.header.x-latam-action-name"][0]) where attributes["http.request.header.x-latam-action-name"] != nil`,
+          //`set(attributes["http.request.header.x-latam-app-session-id"], attributes["http.request.header.x-latam-app-session-id"][0]) where attributes["http.request.header.x-latam-app-session-id"] != nil`,
+          //`set(attributes["http.request.header.x-latam-application-country"], attributes["http.request.header.x-latam-application-country"][0]) where attributes["http.request.header.x-latam-application-country"] != nil`,
+          //`set(attributes["http.request.header.x-latam-application-lang"], attributes["http.request.header.x-latam-application-lang"][0]) where attributes["http.request.header.x-latam-application-lang"] != nil`,
+          //`set(attributes["http.request.header.x-latam-application-name"], attributes["http.request.header.x-latam-application-name"][0]) where attributes["http.request.header.x-latam-application-name"] != nil`,
+          //`set(attributes["http.request.header.x-latam-application-oc"], attributes["http.request.header.x-latam-application-oc"][0]) where attributes["http.request.header.x-latam-application-oc"] != nil`,
+          //`set(attributes["http.request.header.x-latam-client-name"], attributes["http.request.header.x-latam-client-name"][0]) where attributes["http.request.header.x-latam-client-name"] != nil`,
+          //`set(attributes["http.request.header.x-latam-country"], attributes["http.request.header.x-latam-country"][0]) where attributes["http.request.header.x-latam-country"] != nil`,
+          //`set(attributes["http.request.header.x-latam-lang"], attributes["http.request.header.x-latam-lang"][0]) where attributes["http.request.header.x-latam-lang"] != nil`,
+          //`set(attributes["http.request.header.x-latam-request-id"], attributes["http.request.header.x-latam-request-id"][0]) where attributes["http.request.header.x-latam-request-id"] != nil`,
+          //`set(attributes["http.request.header.x-latam-track-id"], attributes["http.request.header.x-latam-track-id"][0]) where attributes["http.request.header.x-latam-track-id"] != nil`,
+          //`set(attributes["http.response.header.x-latam-action-name"], attributes["http.response.header.x-latam-action-name"][0]) where attributes["http.response.header.x-latam-action-name"] != nil`,
+          //`set(attributes["http.response.header.x-latam-app-session-id"], attributes["http.response.header.x-latam-app-session-id"][0]) where attributes["http.response.header.x-latam-app-session-id"] != nil`,
+          //`set(attributes["http.response.header.x-latam-application-name"], attributes["http.response.header.x-latam-application-name"][0]) where attributes["http.response.header.x-latam-application-name"] != nil`,
+          //`set(attributes["http.response.header.x-latam-track-id"], attributes["http.response.header.x-latam-track-id"][0]) where attributes["http.response.header.x-latam-track-id"] != nil`,
+          //`set(attributes["http.response.header.x-latam-request-id"], attributes["http.response.header.x-latam-request-id"][0]) where attributes["http.response.header.x-latam-request-id"] != nil`,
+          //`set(attributes["http.response.header.x-latam-client-name"], attributes["http.response.header.x-latam-client-name"][0]) where attributes["http.response.header.x-latam-client-name"] != nil`,
+          //`set(attributes["service.name"], attributes["k8s.replicaset.name"]) where attributes["service.name"] == nil and attributes["k8s.replicaset.name"] != nil`,
+          //"set(attributes[\"service.instance.id\"], attributes[\"k8s.pod.uid\"]) where attributes[\"k8s.pod.uid\"] != nil and attributes[\"service.instance.id\"] == nil",
+          //`replace_pattern(name, "^(POST|GET|PUT|DELETE|PATCH) /ws/api", "$1 /*/api")`,
+          //`replace_pattern(name, "/v[0-9]+/", "/v*/")`,
+          //`replace_pattern(name, "/api/ndc/shopping/", "/api/*/shopping/")`,
+          `delete_key(attributes, "http.scheme")`,
+          `delete_key(attributes, "http.host")`,
+        ]
+      }    
       output {
-        traces = [otelcol.processor.tail_sampling.tail_sampling_production.input]
+        traces = [ otelcol.connector.servicegraph.servicegraphbase.input,
+                   otelcol.connector.spanmetrics.spanmetricsbse.input,
+                   otelcol.processor.tail_sampling.tail_sampling_production.input]
       }
     }
 
@@ -194,15 +245,23 @@ data:
         }
       }
       output {
-        traces = [ otelcol.connector.servicegraph.servicegraphbase.input,
-                   otelcol.connector.spanmetrics.spanmetricsbse.input,
-                   otelcol.processor.batch.processorbatch.input]
+        traces = [ otelcol.processor.batch.processorbatch.input]
       }
     }
 
     otelcol.connector.servicegraph "servicegraphbase" {
-      dimensions = ["http.method", "http.target", "http.status_code", "http.route","http.request.header.x.request.id","http.request.header.x_request_id","x_request_id","x-request-id"]
+      dimensions = ["http.method", 
+                   "http.target", 
+                   "http.status_code", 
+                   "http.route",
+                   "http.request.header.x.request.id",
+                   "http.request.header.x_request_id",
+                   "x_request_id",
+                   "x-request-id"]
       latency_histogram_buckets = ["100ms", "250ms", "500ms","750ms", "1s", "2s", "5s", "10s", "20s", "60s"]	
+      cache_loop = "30s"
+      store_expiration_loop = "10s"
+      metrics_flush_interval = "60s"      
       store {
       max_items = 20
       ttl = "2s" 
@@ -212,43 +271,19 @@ data:
       }
     }
     otelcol.connector.spanmetrics "spanmetricsbse" {
-      dimension {
-        name = "http.status_code"
-      }
-      dimension {
-        name = "http.route"
-      }      
-      dimension {
-        name = "http.method"
-        default = "GET"
-      }
-      dimension {
-        name = "http.request.header.x.request.id"
-      }  
-      dimension {
-        name = "http.request.header.x-request-id"
-      }  
-      dimension {
-        name = "http.request.header.x_request_id"
-      }  
-      dimension {
-        name = "x-request-id"
-      }  
-      dimension {
-        name = "x_request_id"
-      }  
-      dimension {
-        name = "url.path"
-      }
-
-      dimension {
-        name = "http.route"
-      }
-      dimension {
-        name = "http.request.method"
-      }  
-      dimensions_cache_size = 333
-      aggregation_temporality = "DELTA"
+      dimension {        name = "http.status_code"      }
+      dimension {        name = "http.route"      }      
+      dimension {        name = "http.method"        default = "GET"      }
+      dimension {        name = "http.request.header.x.request.id"      }  
+      dimension {        name = "http.request.header.x-request-id"      }  
+      dimension {        name = "http.request.header.x_request_id"      }  
+      dimension {        name = "x-request-id"      }  
+      dimension {        name = "x_request_id"      }  
+      dimension {        name = "url.path"      }
+      dimension {        name = "http.route"      }
+      dimension {        name = "http.request.method"       }  
+      aggregation_cardinality_limit = 1000
+      aggregation_temporality = "CUMULATIVE"  
       histogram {
         unit = "s"
         explicit {
@@ -256,9 +291,14 @@ data:
         }
       }
       metrics_flush_interval = "15s"
-      namespace = "traces.spanmetrics"
+      exemplars {
+        enabled = true
+        max_per_data_point = 10
+      }
+      metric_timestamp_cache_size = 1000
+      resource_metrics_key_attributes = ["service.namespace", "k8s.cluster.name", "k8s.namespace.name", "service.instance.id"]
       output {
-        metrics = [otelcol.exporter.prometheus.default.input]
+        metrics = [otelcol.processor.batch.processorbatch.input]
       }
     }
 
@@ -279,7 +319,7 @@ data:
         ]
       }      
       output {
-        metrics = [otelcol.exporter.prometheus.default.input]
+        metrics = [otelcol.processor.batch.processorbatch.input]
       }
     }
     otelcol.processor.batch "processorbatch" {
@@ -287,17 +327,10 @@ data:
       send_batch_size = 10000
       send_batch_max_size = 11000
       output {
-        metrics = [otelcol.exporter.prometheus.default.input]
-        logs    = [otelcol.exporter.otlp.basetotlp.input]
-        traces  = [otelcol.exporter.otlp.basetotlp.input]
+        metrics = [otelcol.exporter.otlphttp.baseotlphttp.input]
+        traces  = [otelcol.exporter.otlphttp.baseotlphttp.input]
       }
     }
-
-    // tracing {
-    //   sampling_fraction = 1
-    //   write_to          = [otelcol.processor.tail_sampling.tail_sampling_production.input]
-    // }
-
 
 
     prometheus.exporter.self "self_metrics" {}

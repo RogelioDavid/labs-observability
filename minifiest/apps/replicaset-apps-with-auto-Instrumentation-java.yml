@@ -267,7 +267,7 @@ spec:
   selector:
     app: "ms-hello-observability-services"
   type: "LoadBalancer"
-  loadBalancerIP: ""
+  loadBalancerIP: "34.122.2.191"
 ---
 apiVersion: "v1"
 kind: "Service"
@@ -316,4 +316,4 @@ spec:
   selector:
     app: "ms-user-observability-services"
   type: "LoadBalancer"
-  loadBalancerIP: ""
+  loadBalancerIP: "35.202.10.37"
