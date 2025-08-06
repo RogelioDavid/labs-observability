@@ -1,0 +1,107 @@
+---
+# Source: k8s-monitoring/charts/alloy/templates/hpa.yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: grafana-alloy-traces
+  namespace: monitoring
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: statefulset
+    name: grafana-alloy-traces
+  minReplicas: 1
+  maxReplicas: 3
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+    scaleUp:
+      stabilizationWindowSeconds: 0
+  metrics:
+    # Changing the order of the metrics will cause ArgoCD to go into a sync loop
+    # memory needs to be first.
+    # More info in: https://github.com/argoproj/argo-cd/issues/1079
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 90
+---
+# Source: k8s-monitoring/charts/alloy/templates/controllers/statefulset.yaml
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: grafana-alloy-traces
+  namespace: monitoring
+spec:
+  podManagementPolicy: Parallel
+  minReadySeconds: 10
+#  replicas: 1
+  selector:
+    matchLabels:
+      name: grafana-alloy-traces
+  serviceName: grafana-alloy-traces
+  template:
+    metadata:
+      labels:
+        name: grafana-alloy-traces
+    spec:
+      containers:
+      - args:
+          - run
+          - /etc/agent/config.alloy
+          - --storage.path=/var/lib/alloy/data
+          - --server.http.listen-addr=0.0.0.0:12345      
+          - --cluster.name=alloy          
+          - --cluster.rejoin-interval=30s
+          - --cluster.max-join-peers=4
+        env:
+        - name: HOSTNAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        image: grafana/alloy:v1.8.0
+        imagePullPolicy: IfNotPresent
+        name: grafana-alloy-traces
+        ports:
+        - containerPort: 80
+          name: http-metrics
+        - containerPort: 4317
+        - containerPort: 4318
+        - containerPort: 9464        
+        volumeMounts:
+        - mountPath: /etc/agent/config.alloy
+          name: grafana-alloy-traces
+      serviceAccountName: grafana-alloy-traces
+      volumes:
+      - configMap:
+          name: grafana-alloy-traces
+        name: grafana-alloy-traces
+  updateStrategy:
+    type: RollingUpdate
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: agent-wal-traces
+      namespace: monitoring
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 5Gi          
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-alloy-claim0-traces
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+status: {}

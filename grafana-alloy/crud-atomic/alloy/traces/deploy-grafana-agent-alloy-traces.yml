@@ -2,54 +2,56 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: grafana-alloy-logs
+  name: grafana-alloy-traces
   namespace: monitoring
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: grafana-alloy-logs
-  serviceName: grafana-alloy-logs
+      name: grafana-alloy-traces
+  serviceName: grafana-alloy-traces
   template:
     metadata:
       labels:
-        name: grafana-alloy-logs
+        name: grafana-alloy-traces
     spec:
       containers:
       - args:
           - run
           - /etc/agent/config.alloy
           - --storage.path=/var/lib/alloy/data
+          - --stability.level=generally-available
           - --server.http.listen-addr=0.0.0.0:12345      
         env:
         - name: HOSTNAME
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        image: grafana/alloy:v1.3.0
+        image: grafana/alloy:v1.8.0
         imagePullPolicy: IfNotPresent
-        name: grafana-alloy-logs
+        name: grafana-alloy-traces
         ports:
         - containerPort: 80
           name: http-metrics
         - containerPort: 4317
         - containerPort: 4318
+        - containerPort: 9411        
         - containerPort: 9464        
         volumeMounts:
         - mountPath: /etc/agent/config.alloy
-          name: grafana-alloy-logs
-      serviceAccountName: grafana-alloy-logs
+          name: grafana-alloy-traces
+      serviceAccountName: grafana-alloy-traces
       volumes:
       - configMap:
-          name: grafana-alloy-logs
-        name: grafana-alloy-logs
+          name: grafana-alloy-traces
+        name: grafana-alloy-traces
   updateStrategy:
     type: RollingUpdate
   volumeClaimTemplates:
   - apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
-      name: agent-wal-logs
+      name: agent-wal-traces
       namespace: monitoring
     spec:
       accessModes:
@@ -61,7 +63,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: grafana-alloy-claim0-logs
+  name: grafana-alloy-claim0-traces
 spec:
   accessModes:
     - ReadWriteOnce

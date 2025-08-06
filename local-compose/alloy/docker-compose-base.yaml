@@ -1,0 +1,45 @@
+version: "3.4"
+services:
+
+  grafana-alloy-traces:
+    image: grafana/alloy:v1.5.1
+    volumes:
+      - ./config/config-traces.alloy:/etc/agent/config.alloy
+    command:
+      - run
+      - /etc/agent/config.alloy
+      - --storage.path=/var/lib/alloy/data
+      - --server.http.listen-addr=0.0.0.0:12345
+ #     - -config.file=/etc/agent/config.river
+ #     - -config.file=/etc/agent-config/agent.yaml      
+    environment:
+      HOSTNAME: grafana-alloy-traces
+    ports:
+       - "4317:4317"
+       - "4318:4318"
+       - "9464:9464"
+       
+  grafana-alloy-metrics-logs:
+    image: grafana/alloy:v1.4.0
+    volumes:
+      - ./config/config-metrics-logs.alloy:/etc/agent/config.alloy
+      - ./logs/hello-observability.log:/tmp/hello-observability.log
+      - ./logs/ms-service-app-ms2.log:/tmp/ms-service-app-ms2.log
+      - ./logs/ms-service-app-ms2.log:/tmp/ms-service-app-ms1.log      
+    command:
+      - run
+      - /etc/agent/config.alloy
+      - --storage.path=/var/lib/alloy/data
+      - --server.http.listen-addr=0.0.0.0:12345
+ #     - -config.file=/etc/agent/config.river
+ #     - -config.file=/etc/agent-config/agent.yaml      
+    environment:
+      HOSTNAME: grafana-alloy-metrics
+   
+  # Our load generator
+  ubuntu-local:
+    image: ubuntu
+    restart: on-failure
+    command: ["sleep","infinity"]
+
+

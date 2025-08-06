@@ -1,0 +1,88 @@
+logging {
+    level  = "debug"
+    format = "logfmt"
+}
+
+// Prometheus configs
+prometheus.remote_write "metrics_serverless" {
+  external_labels = {
+    monitor = "hello-observability",
+  }
+  endpoint {
+    name = "hello-observability-6397c4"
+	url  = "https://prometheus-us-central1.grafana.net/api/prom/push"
+	basic_auth {
+	  username = "821057"
+	  password = "eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0="
+	}
+  }
+}
+discovery.relabel "ms-service-cloud-run" {
+	targets = [
+	  {__address__ = "localhost:8080",instance = "instance-0",}
+	  {__address__ = "localhost:8081",instance = "instance-1",}
+	  {__address__ = "localhost:8082",instance = "instance-2",}
+	  {__address__ = "localhost:8083",instance = "instance-3",}
+	  {__address__ = "localhost:8084",instance = "instance-4",}
+	  {__address__ = "localhost:8085",instance = "instance-5",}
+	  {__address__ = "localhost:8086",instance = "instance-6",}
+	]
+	rule {
+		source_labels = ["trace_id"]
+		target_label  = "traceID"
+	}
+}
+
+prometheus.scrape "ms-service-cloud-run" {
+	targets         = discovery.relabel.ms-service-cloud-run.output
+	forward_to      = [prometheus.relabel.ms-service-cloud-run.receiver]
+	job_name        = "ms-service-cloud-run"
+	scrape_interval = "10s"
+}
+
+ 
+
+prometheus.relabel "ms-service-cloud-run" {
+	forward_to = [prometheus.remote_write.metrics_serverless.receiver]
+	rule {
+		source_labels = ["trace_id"]
+		target_label  = "traceID"
+	}
+}
+
+// LOKI configs
+loki.write "logs_default" {
+	endpoint {
+		url = "https://logs-prod-017.grafana.net/loki/api/v1/push"
+
+		basic_auth {
+			username = "409497"
+			password = "eyJrIjoiNGRjNDU3MmQ1MTVlOTk2ODQ1Zjk1MGNmZDcwNGQyMmIwOGEwNjA3MyIsIm4iOiJyb2dtZW4tcHVibGlzaGVyIiwiaWQiOjgxNDMyMn0="
+		}
+	}
+	external_labels = {}
+}
+
+ 
+ 
+
+local.file_match "logs_default_ms_service_app_ms1" {
+	path_targets = [{
+		__address__ = "localhost",
+		__path__    = "/tmp/ms-service-app-ms1.log",
+		job         = "ms-service-app-ms1",
+	}]
+}
+
+loki.source.file "logs_default_ms_service_app_ms1" {
+	targets    = local.file_match.logs_default_ms_service_app_ms1.targets
+	forward_to = [loki.write.logs_default.receiver]
+}
+
+ 
+ 
+
+
+// OtelCol configs
+
+ 
