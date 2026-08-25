@@ -69,7 +69,8 @@ data:
       }
   
       output {
-        metrics = [otelcol.processor.filter.filter_app_metrics.input]
+        //metrics = [otelcol.processor.filter.filter_app_metrics.input]
+        metrics = [otelcol.processor.transform.default.input] 
         traces  = [otelcol.processor.memory_limiter.memory_limiter.input]
       }
     }
@@ -145,15 +146,15 @@ data:
       traces {
         span = [
           "IsMatch(attributes[\"http.route\"], \".*prometheus.*\")",
-          "IsMatch(attributes[\"http.route\"], \".*health.*\")",
-          "IsMatch(attributes[\"http.target\"], \".*health.*\")",
-          "IsMatch(attributes[\"http.target\"], \".*health_check.*\")",
-          "IsMatch(attributes[\"db.operation\"], \".*PING.*\")",
+          //"IsMatch(attributes[\"http.route\"], \".*health.*\")",
+          //"IsMatch(attributes[\"http.target\"], \".*health.*\")",
+          //"IsMatch(attributes[\"http.target\"], \".*health_check.*\")",
+          //"IsMatch(attributes[\"db.operation\"], \".*PING.*\")",
           "IsMatch(attributes[\"express.type\"], \".*middleware.*\")",
           "IsMatch(attributes[\"express.type\"], \".*router.*\")",
-          "IsMatch(attributes[\"db.operation\"], \".*EXIST.*\")",
-          "IsMatch(attributes[\"express.name\"], \".*request handler.*\")",
-          "IsMatch(attributes[\"net.peer.port\"], \".*9000.*\")",
+          //"IsMatch(attributes[\"db.operation\"], \".*EXIST.*\")",
+          //"IsMatch(attributes[\"express.name\"], \".*request handler.*\")",
+          //"IsMatch(attributes[\"net.peer.port\"], \".*9000.*\")",
           "IsMatch(attributes[\"db.system\"], \".*redis.*\")",
         ]
       }
@@ -213,9 +214,8 @@ data:
         ]
       }    
       output {
-        traces = [ otelcol.connector.servicegraph.servicegraphbase.input,
-                   otelcol.connector.spanmetrics.spanmetricsbse.input,
-                   otelcol.processor.tail_sampling.tail_sampling_production.input]
+        //traces = [ otelcol.connector.servicegraph.servicegraphbase.input,otelcol.connector.spanmetrics.spanmetricsbse.input,otelcol.processor.tail_sampling.tail_sampling_production.input]
+        traces = [ otelcol.processor.batch.processorbatch.input]      
       }
     }
 
@@ -271,9 +271,9 @@ data:
       }
     }
     otelcol.connector.spanmetrics "spanmetricsbse" {
-      dimension {        name = "http.status_code"      }
-      dimension {        name = "http.route"      }      
-      dimension {        name = "http.method"        default = "GET"      }
+      dimension {        name = "http.status_code" }
+      dimension {        name = "http.route" }      
+      dimension {        name = "http.method" }
       dimension {        name = "http.request.header.x.request.id"      }  
       dimension {        name = "http.request.header.x-request-id"      }  
       dimension {        name = "http.request.header.x_request_id"      }  
@@ -282,7 +282,7 @@ data:
       dimension {        name = "url.path"      }
       dimension {        name = "http.route"      }
       dimension {        name = "http.request.method"       }  
-      aggregation_cardinality_limit = 1000
+      //aggregation_cardinality_limit = 1000
       aggregation_temporality = "CUMULATIVE"  
       histogram {
         unit = "s"

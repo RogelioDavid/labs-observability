@@ -27,7 +27,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        image: grafana/alloy:v1.8.0
+        image: grafana/alloy:v1.10.1
         imagePullPolicy: IfNotPresent
         name: grafana-alloy-metrics-apps
         ports:
@@ -35,7 +35,8 @@ spec:
           name: http-metrics
         - containerPort: 4317
         - containerPort: 4318
-        - containerPort: 9464        
+        - containerPort: 9411        
+        - containerPort: 9464       
         volumeMounts:
         - mountPath: /etc/agent/config.alloy
           name: grafana-alloy-metrics-apps

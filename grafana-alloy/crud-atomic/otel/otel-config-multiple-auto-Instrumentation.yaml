@@ -4,18 +4,17 @@ metadata:
   name: java-auto-instrumentation
   namespace: opentelemetry-collector
 spec:
-  exporter:
-    endpoint: http://lb-grafana-alloy-traces.monitoring.svc.cluster.local:4317
+#  exporter:
+#    endpoint: http://lb-grafana-alloy-traces.monitoring.svc.cluster.local:4317
   propagators:
   - tracecontext
   - baggage
-  - b3
   sampler:
     argument: '1'
     type: parentbased_traceidratio
 
   java:
-    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-java:1.33.6
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-java:2.18.0
     env:
     - name: OTEL_INSTRUMENTATION_HTTP_SERVER_CAPTURE_REQUEST_HEADERS
       value: "x-request-id"
@@ -60,7 +59,13 @@ spec:
     - name: OTEL_TRACES_EXPORTER
       value: "otlp"
     - name: OTEL_METRICS_EXPORTER
-      value: "prometheus"
+      value: "otlp"
+    - name: OTEL_EXPORTER_OTLP_PROTOCOL
+      value: "grpc"
+    - name: OTEL_LOGS_EXPORTER
+      value: "none"
+    - name: OTEL_PROPAGATORS
+      value: "tracecontext,baggage"            
 ---
 apiVersion: opentelemetry.io/v1alpha1
 kind: Instrumentation
@@ -68,18 +73,29 @@ metadata:
   name: node-auto-instrumentation
   namespace: opentelemetry-collector
 spec:
-  exporter:
-    endpoint: http://lb-grafana-alloy-traces.monitoring.svc.cluster.local:4317
+#  exporter:
+#    endpoint: http://lb-grafana-alloy-traces.monitoring.svc.cluster.local:4317
   propagators:
   - tracecontext
   - baggage
-  - b3
   sampler:
     argument: '1'
     type: parentbased_traceidratio
 
   nodejs:
-    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-nodejs:0.40.0
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-nodejs:0.60.1
     env:
-    - name: OTEL_EXPORTER_OTLP_ENDPOINT
+    - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
       value: "http://lb-grafana-alloy-traces.monitoring.svc.cluster.local:4317" 
+    - name: OTEL_EXPORTER_OTLP_METRICS_ENDPOINT
+      value: "http://grafana-alloy-metrics-apps.monitoring.svc.cluster.local:4317" 
+    - name: OTEL_TRACES_EXPORTER
+      value: "otlp"
+    - name: OTEL_METRICS_EXPORTER
+      value: "otlp"
+    - name: OTEL_EXPORTER_OTLP_PROTOCOL
+      value: "grpc"
+    - name: OTEL_LOGS_EXPORTER
+      value: "none"
+    - name: OTEL_PROPAGATORS
+      value: "tracecontext,baggage"      

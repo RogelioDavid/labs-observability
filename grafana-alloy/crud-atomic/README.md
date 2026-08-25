@@ -63,7 +63,7 @@ Por otro lado  mantiene los Mismo Pros / Cons del modo estatico, ademas maneja p
 ## 3.- instalar los Custom Resource para soportar Open Telemetry Collector
 
 ````
-  - kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.5/cert-manager.yaml
+  - kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.17.1/cert-manager.yaml
   - kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml
 ````
 
@@ -97,7 +97,9 @@ Esta opcion permite probar declaraciones de multiples auto-instrumentacion para 
   - kubectl apply -f .\grafana-alloy\crud-atomic\otel\otel-config-multiple-auto-Instrumentation.yaml
 
 
+si se busca usar la opcion de probar   auto-instrumentado para agentes de IA
 
+  - kubectl apply -f .\grafana-alloy\crud-atomic\otel\ia\otel-config-Instrumentation.yaml
 ````
 
 ## 5.2- instalar la opcion de collector en modo Sidecar de otel y utilizando la instrumentacion manual hacia al collector grafana-alloy de trazas

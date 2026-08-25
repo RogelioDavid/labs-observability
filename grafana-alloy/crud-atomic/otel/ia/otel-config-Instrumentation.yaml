@@ -1,0 +1,38 @@
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: ia-auto-instrumentation
+  namespace: opentelemetry-collector
+spec:
+#  exporter:
+#    endpoint: http://lb-grafana-alloy-traces.monitoring.svc.cluster.local:4317
+  propagators:
+  - tracecontext
+  - baggage
+  sampler:
+    argument: '1'
+    type: parentbased_traceidratio
+  defaults:
+    useLabelsForResourceAttributes: true
+  nodejs:
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-nodejs:0.78.0
+    env:
+    - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+      value: "http://lb-grafana-alloy-traces.monitoring.svc.cluster.local:4317" 
+    - name: OTEL_EXPORTER_OTLP_METRICS_ENDPOINT
+      value: "http://grafana-alloy-metrics-apps.monitoring.svc.cluster.local:4317" 
+    - name: OTEL_TRACES_EXPORTER
+      value: "otlp"
+    - name: OTEL_METRICS_EXPORTER
+      value: "otlp"
+    - name: OTEL_EXPORTER_OTLP_PROTOCOL
+      value: "grpc"
+    - name: OTEL_LOGS_EXPORTER
+      value: "none"
+    - name: OTEL_PROPAGATORS
+      value: "tracecontext,baggage"
+    - name: OTEL_METRIC_EXPORT_INTERVAL
+      value: "30000"
+    # Limita la instrumentación a lo útil para este agente.
+    - name: OTEL_NODE_ENABLED_INSTRUMENTATIONS
+      value: http,undici,runtime-node      

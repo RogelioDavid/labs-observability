@@ -20,6 +20,9 @@ spec:
   - name: grafana-agent-otlp-otr-metrics
     port: 9464
     targetPort: 9464
+  - name: grafana-agent-otlp-2-metrics
+    port: 9411
+    targetPort: 9411
   selector:
     name: grafana-alloy-metrics-infra
 ---
